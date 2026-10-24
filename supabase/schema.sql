@@ -70,6 +70,17 @@ CREATE TABLE IF NOT EXISTS applications (
   applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- User Consents table (DPDP Act 2023 & Section 8.2)
+CREATE TABLE IF NOT EXISTS user_consents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID,
+  scope TEXT NOT NULL,              -- 'ai_processing' | 'analytics' | 'marketing'
+  granted BOOLEAN NOT NULL,
+  granted_at TIMESTAMP WITH TIME ZONE,
+  revoked_at TIMESTAMP WITH TIME ZONE,
+  version TEXT NOT NULL             -- consent text version, for legal audit
+);
+
 -- 24-hour Auto-Purge Cron function for Anonymous Data Minimization (DPDP compliance)
 CREATE OR REPLACE FUNCTION purge_old_anonymous_profiles()
 RETURNS void AS $$
