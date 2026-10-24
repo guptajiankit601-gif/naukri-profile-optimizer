@@ -1,18 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ParsedProfile, ScoreReport, ScoreHistoryPoint, ActionPlanItem, ExperienceBand } from '@/types';
-import { SEEDED_PROFILES } from '@/data/seeded-profiles';
-import { parseRawResumeText } from '@/services/parser';
-import { calculateProfileScore } from '@/services/scorer';
-import { generatePersonalizedActionPlan } from '@/services/action-plan';
+import { SEEDED_PROFILES } from '@/lib/data/seeded-profiles';
+import { parseRawResumeText } from '@/lib/parser';
+import { calculateScore } from '@/lib/scoring';
+import { generateActionPlan } from '@/lib/plan/generate';
 import { AppShell } from '@/components/layout/AppShell';
-import { UploadStep } from '@/components/UploadStep';
-import { TargetRoleStep } from '@/components/TargetRoleStep';
-import { ReviewStep } from '@/components/ReviewStep';
-import { AnalysisProgress } from '@/components/AnalysisProgress';
+import { UploadStep } from '@/components/onboarding/UploadStep';
+import { RoleStep } from '@/components/onboarding/RoleStep';
+import { TargetingStep } from '@/components/onboarding/TargetingStep';
+import { ProcessingStep } from '@/components/onboarding/ProcessingStep';
 import { Dashboard } from '@/components/Dashboard';
 import { ShareCardModal } from '@/components/ShareCardModal';
+import { Hero } from '@/components/marketing/Hero';
+import { RecruiterVsCandidate } from '@/components/marketing/RecruiterVsCandidate';
+import { ProofSection } from '@/components/marketing/ProofSection';
+import { SampleCard } from '@/components/marketing/SampleCard';
+import { Faq } from '@/components/marketing/Faq';
+import { Footer } from '@/components/marketing/Footer';
 
 type AppStep = 'upload' | 'target-role' | 'review' | 'analysis' | 'dashboard';
 
@@ -20,24 +26,29 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<AppStep>('upload');
   const [activeDashboardTab, setActiveDashboardTab] = useState<string>('recruiter-sim');
   const [profile, setProfile] = useState<ParsedProfile>(SEEDED_PROFILES.arjun);
-  const [scoreReport, setScoreReport] = useState<ScoreReport>(() => calculateProfileScore(SEEDED_PROFILES.arjun));
+  const [scoreReport, setScoreReport] = useState<ScoreReport>(() => calculateScore(SEEDED_PROFILES.arjun));
   const [scoreHistory, setScoreHistory] = useState<ScoreHistoryPoint[]>([
     {
       date: 'Today',
       timestamp: Date.now(),
-      score: calculateProfileScore(SEEDED_PROFILES.arjun).overallScore,
+      score: calculateScore(SEEDED_PROFILES.arjun).overallScore,
       changeReason: 'Initial Profile Intake'
     }
   ]);
   const [actionPlan, setActionPlan] = useState<ActionPlanItem[]>(() => 
-    generatePersonalizedActionPlan(SEEDED_PROFILES.arjun, calculateProfileScore(SEEDED_PROFILES.arjun))
+    generateActionPlan(SEEDED_PROFILES.arjun).items
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const uploadSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToUpload = () => {
+    uploadSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleSelectSeededProfile = (key: string) => {
     const seeded = SEEDED_PROFILES[key] || SEEDED_PROFILES.arjun;
-    const report = calculateProfileScore(seeded);
-    const plan = generatePersonalizedActionPlan(seeded, report);
+    const report = calculateScore(seeded);
+    const planSummary = generateActionPlan(seeded);
 
     setProfile(seeded);
     setScoreReport(report);
@@ -46,10 +57,10 @@ export default function HomePage() {
         date: 'Today',
         timestamp: Date.now(),
         score: report.overallScore,
-        changeReason: `Loaded ${seeded.label} Demo`
+        changeReason: `Loaded ${seeded.name} Demo`
       }
     ]);
-    setActionPlan(plan);
+    setActionPlan(planSummary.items);
     setCurrentStep('dashboard');
   };
 
@@ -83,11 +94,11 @@ export default function HomePage() {
   };
 
   const handleAnalysisComplete = () => {
-    const report = calculateProfileScore(profile);
-    const plan = generatePersonalizedActionPlan(profile, report);
+    const report = calculateScore(profile);
+    const planSummary = generateActionPlan(profile);
 
     setScoreReport(report);
-    setActionPlan(plan);
+    setActionPlan(planSummary.items);
     setScoreHistory([
       {
         date: 'Today',
@@ -100,12 +111,12 @@ export default function HomePage() {
   };
 
   const handleUpdateProfile = (updatedProfile: ParsedProfile, changeReason: string = 'Profile Optimization') => {
-    const newReport = calculateProfileScore(updatedProfile);
-    const newPlan = generatePersonalizedActionPlan(updatedProfile, newReport);
+    const newReport = calculateScore(updatedProfile);
+    const newPlan = generateActionPlan(updatedProfile);
 
     setProfile(updatedProfile);
     setScoreReport(newReport);
-    setActionPlan(newPlan);
+    setActionPlan(newPlan.items);
     setScoreHistory(prev => [
       ...prev,
       {
@@ -134,14 +145,29 @@ export default function HomePage() {
         onOpenShareCard={() => setIsShareModalOpen(true)}
       >
         {currentStep === 'upload' && (
-          <UploadStep
-            onParsedTextReady={handleParsedTextReady}
-            onSelectSeededProfile={handleSelectSeededProfile}
-          />
+          <div className="space-y-12">
+            <Hero
+              onGetStarted={scrollToUpload}
+              onSelectPersona={handleSelectSeededProfile}
+            />
+
+            <div ref={uploadSectionRef} className="max-w-4xl mx-auto px-4">
+              <UploadStep
+                onParsedTextReady={handleParsedTextReady}
+                onSelectSeededProfile={handleSelectSeededProfile}
+              />
+            </div>
+
+            <RecruiterVsCandidate />
+            <ProofSection />
+            <SampleCard />
+            <Faq />
+            <Footer />
+          </div>
         )}
 
         {currentStep === 'target-role' && (
-          <TargetRoleStep
+          <RoleStep
             initialRoleId={profile.targetRoleId}
             initialBand={profile.experienceBand}
             initialCities={profile.targetCities}
@@ -152,7 +178,7 @@ export default function HomePage() {
         )}
 
         {currentStep === 'review' && (
-          <ReviewStep
+          <TargetingStep
             initialProfile={profile}
             onConfirmAndAnalyze={handleReviewConfirmed}
             onBack={() => setCurrentStep('target-role')}
@@ -160,7 +186,7 @@ export default function HomePage() {
         )}
 
         {currentStep === 'analysis' && (
-          <AnalysisProgress onComplete={handleAnalysisComplete} />
+          <ProcessingStep onComplete={handleAnalysisComplete} />
         )}
 
         {currentStep === 'dashboard' && (
