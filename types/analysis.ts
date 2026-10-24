@@ -27,7 +27,7 @@ export type ScoringComponent = ComponentResult;
 
 export interface ScoreReport {
   overallScore: number;
-  verdict: 'Weak' | 'Okay' | 'Strong';
+  verdict: 'Weak' | 'Okay' | 'Strong' | 'Needs Work';
   components: ComponentResult[];
   topFixes: { title: string; points: number; actionTab: string }[];
 }
