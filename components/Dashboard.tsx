@@ -12,19 +12,16 @@ import { PeerBenchmarkView } from './PeerBenchmarkView';
 import { ProgressTrackerView } from './ProgressTrackerView';
 import { ActionPlanView } from './ActionPlanView';
 import { ExportView } from './ExportView';
+import { DemoProfileBanner } from './shared/DemoProfileBanner';
 import confetti from 'canvas-confetti';
 import { 
   Award,
   HelpCircle,
   X,
-  PhoneCall,
-  Calendar,
-  PieChart as PieIcon,
   ShieldCheck,
   ChevronRight,
   Sparkles,
-  Zap,
-  TrendingUp
+  Zap
 } from 'lucide-react';
 import { ScoreRing } from '@/components/dashboard/ScoreRing';
 
@@ -69,26 +66,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const score = scoreReport.overallScore;
-  const potentialScore = Math.min(96, score + 38);
-  const baselineCalls = Math.max(1, Math.round(score * 0.08));
-  const potentialCalls = Math.min(25, Math.max(8, Math.round(potentialScore * 0.22)));
+  const totalHeadroom = scoreReport.headroomTotal ?? (100 - score);
+  const topYield = scoreReport.topFixes.reduce((sum, f) => sum + f.points, 0);
 
   return (
     <div className="w-full space-y-6">
+      {/* Illustrative Demo Profile Alert Banner (if in demo mode) */}
+      <DemoProfileBanner />
+
       {/* 1. TOP HERO ROW (VISIBILITY STANDING + CANDIDATE PROFILE + PRIORITY TASKS) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Col 1 (4 cols): Visibility Standing Gauge */}
         <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-xl flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8]">
-              Visibility Standing
+              Profile Optimization Score
             </span>
             <button
               onClick={() => setIsComponentModalOpen(true)}
-              className="text-[11px] text-[#FF7582] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-[11px] text-[#FF7582] hover:underline flex items-center gap-1 cursor-pointer font-semibold"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>10 Rules</span>
+              <span>10 Criteria (100 Pts)</span>
             </button>
           </div>
 
@@ -102,21 +101,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                   : 'bg-[#FF7582]/20 text-[#FF7582] border border-[#FF7582]/30'
               }`}>
-                {scoreReport.verdict} Rank
+                {scoreReport.verdict} Readiness
               </span>
               <p className="text-sm font-bold text-white leading-tight">
-                Recruiter Glance Tier
+                Recruiter Screening Heuristic
               </p>
               <p className="text-xs text-slate-300">
-                Score headroom: <strong className="text-[#FF7582] font-mono">+{potentialScore - score} pts</strong>
+                Score headroom: <strong className="text-[#FF7582] font-mono font-bold">+{totalHeadroom} pts</strong>
               </p>
             </div>
           </div>
 
           <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
-            <span>Inbound Calls:</span>
-            <span className="font-bold text-white">
-              {baselineCalls}/mo &rarr; <span className="text-emerald-400 font-mono font-bold">{potentialCalls}/mo</span>
+            <span>Evaluation Model:</span>
+            <span className="font-semibold text-white">
+              {scoreReport.isFresher ? (
+                <span className="text-emerald-400">Fresher Model (Projects Reweighted)</span>
+              ) : (
+                <span className="text-slate-200">Standard 10-Criteria Model</span>
+              )}
             </span>
           </div>
         </div>
@@ -128,7 +131,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               Candidate Target
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/5 font-semibold">
-              {profile.experienceBand} Experience
+              {profile.experienceBand} Band
             </span>
           </div>
 
@@ -154,7 +157,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
             <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-950/40 border border-white/5 text-[10px] text-slate-400">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>DPDP Encrypted</span>
+              <span>Client-Side Processed</span>
             </div>
           </div>
         </div>
@@ -164,10 +167,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8] flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-[#FF7582]" />
-              Priority Fixes
+              Priority Fixes (Simulated)
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-bold font-mono">
-              +{scoreReport.topFixes.reduce((s, f) => s + f.points, 0)} pts yield
+              +{topYield} pts yield
             </span>
           </div>
 
@@ -182,7 +185,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <p className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
                     {fix.title}
                   </p>
-                  <p className="text-[10px] text-slate-400">Click to resolve in editor</p>
+                  <p className="text-[10px] text-slate-400 truncate">
+                    {fix.description || 'Simulated yield capped at component headroom'}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-xs font-bold text-emerald-400 font-mono">
@@ -197,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="pt-2 text-right">
             <button
               onClick={() => setActiveTab('action-plan')}
-              className="text-xs text-[#FF7582] font-bold hover:underline inline-flex items-center gap-1"
+              className="text-xs text-[#FF7582] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <span>View 7-Day Action Plan</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -287,10 +292,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#FF7582]" />
-              <span>10-Component Weighted Recruiter Scoring Formula</span>
+              <span>10-Component Transparent Scoring Formula (Total: 100 Pts)</span>
             </h3>
             <p className="text-xs text-slate-300 mb-6">
-              Deterministic, explainable breakdown of how your {score}/100 score is computed.
+              Deterministic, explainable evaluation of how your {score}/100 score is computed across all 10 criteria.
             </p>
 
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
@@ -305,13 +310,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                     <div
                       className="bg-gradient-to-r from-[#FF7582] to-[#C56C86] h-full rounded-full"
-                      style={{ width: `${(comp.score / comp.max) * 100}%` }}
+                      style={{ width: `${comp.max > 0 ? (comp.score / comp.max) * 100 : 0}%` }}
                     />
                   </div>
                   <p className="text-[11px] text-slate-300 mt-1">{comp.issue}</p>
-                  <p className="text-[11px] text-emerald-400">💡 <strong>Fix:</strong> {comp.fix}</p>
+                  <p className="text-[11px] text-emerald-400">💡 <strong>Action:</strong> {comp.fix}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+              <span>Mathematical Guarantee: Sum of component maxima = 100 · Sum of component points = {score}</span>
+              <button
+                onClick={() => setIsComponentModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg bg-white/10 text-white font-semibold hover:bg-white/15 cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

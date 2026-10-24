@@ -1,21 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Award, ChevronDown, Check, Briefcase, MapPin, Sparkles } from 'lucide-react';
+import { Award, ChevronDown, Briefcase, RotateCcw, UserCheck, Sparkles } from 'lucide-react';
 import { SEEDED_PROFILES } from '@/lib/data/seeded-profiles';
 import { Button } from '@/components/ui/button';
 
 interface GlassMenuBarProps {
   currentScore?: number;
   targetRoleBadge?: string;
+  isDemo?: boolean;
   onSelectSeededProfile: (key: string) => void;
   onReset: () => void;
   onOpenShareCard?: () => void;
 }
 
 export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
-  currentScore = 52,
-  targetRoleBadge = 'Backend Engineer · 3-5 yrs · Bengaluru',
+  currentScore,
+  targetRoleBadge = 'Deterministic Resume Audit',
+  isDemo = false,
   onSelectSeededProfile,
   onReset,
   onOpenShareCard
@@ -48,25 +50,30 @@ export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
         <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#14273A] border border-white/10 text-xs font-semibold text-slate-200 shadow-inner">
           <Briefcase className="w-3.5 h-3.5 text-[#FF7582] shrink-0" />
           <span className="tracking-wide text-slate-200">{targetRoleBadge}</span>
+          {isDemo && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold uppercase ml-1">
+              Sample Demo
+            </span>
+          )}
         </div>
 
-        {/* Right: Persona Switcher + Score Pill + Share Button */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Right: Persona Switcher + Score Pill + Reset / Share Button */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Persona Switcher Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsDemoDropdownOpen(!isDemoDropdownOpen)}
               className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#14273A] border border-white/10 hover:border-white/20 text-xs font-semibold flex items-center gap-1.5 text-slate-200 transition-colors cursor-pointer"
             >
-              <span className="text-[10px] text-[#8FA3B8] uppercase font-bold hidden sm:inline">Persona:</span>
-              <span className="text-white font-bold">Switch</span>
+              <UserCheck className="w-3.5 h-3.5 text-[#FF7582]" />
+              <span className="text-white font-bold hidden sm:inline">Demos</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {isDemoDropdownOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-[#14273A] border border-white/10 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="text-[10px] uppercase font-bold text-[#8FA3B8] px-2 py-1 tracking-wider">
-                  Test Drive Personas:
+                  Illustrative Sample Personas:
                 </div>
                 {Object.entries(SEEDED_PROFILES).map(([key, p]) => (
                   <button
@@ -87,23 +94,36 @@ export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
             )}
           </div>
 
-          {/* Score Pill ("52/100") */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#14273A] border border-[#FF7582]/30 shadow-sm">
-            <span className="text-[10px] font-bold text-[#8FA3B8] uppercase tracking-wider hidden sm:inline">Score</span>
-            <span className="text-xs font-black text-[#FF7582] font-mono">
-              {currentScore}/100
-            </span>
-          </div>
+          {/* Reset / New Analysis Button */}
+          {currentScore !== undefined && (
+            <button
+              onClick={onReset}
+              className="p-1.5 rounded-xl bg-[#14273A] border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Reset analysis & clear state"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Score Pill (Only displayed when report is computed) */}
+          {currentScore !== undefined && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#14273A] border border-[#FF7582]/30 shadow-sm">
+              <span className="text-[10px] font-bold text-[#8FA3B8] uppercase tracking-wider hidden sm:inline">Score</span>
+              <span className="text-xs font-black text-[#FF7582] font-mono">
+                {currentScore}/100
+              </span>
+            </div>
+          )}
 
           {/* Primary "Share Recruiter Card" Button */}
-          {onOpenShareCard && (
+          {currentScore !== undefined && onOpenShareCard && (
             <Button
               size="sm"
               onClick={onOpenShareCard}
-              className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 hover:brightness-110 shadow-md shadow-[#FF7582]/20 shrink-0"
+              className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 hover:brightness-110 shadow-md shadow-[#FF7582]/20 shrink-0 cursor-pointer"
             >
               <Award className="w-3.5 h-3.5 mr-1.5" />
-              <span className="hidden sm:inline">Share Recruiter Card</span>
+              <span className="hidden sm:inline">Share Score Card</span>
               <span className="sm:hidden">Share</span>
             </Button>
           )}

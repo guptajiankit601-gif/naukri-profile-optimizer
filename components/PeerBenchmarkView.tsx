@@ -1,15 +1,19 @@
+'use client';
+
 import React from 'react';
 import { ParsedProfile } from '@/types';
 import { getBenchmarkForRole } from '@/data/benchmarks';
 import { extractMetrics } from '@/lib/parser/extract-metrics';
-import { Users, Award, ShieldCheck, CheckCircle2, AlertTriangle, ArrowUpRight, Zap } from 'lucide-react';
+import { Users, ShieldCheck, CheckCircle2, AlertTriangle, Info, Sparkles } from 'lucide-react';
 
 interface PeerBenchmarkViewProps {
   profile: ParsedProfile;
 }
 
 export const PeerBenchmarkView: React.FC<PeerBenchmarkViewProps> = ({ profile }) => {
-  const primaryCityTier = profile.targetCities.some(c => c.includes('Bangalore') || c.includes('Hyderabad') || c.includes('Mumbai') || c.includes('Pune'))
+  const primaryCityTier = profile.targetCities.some(c =>
+    c.includes('Bangalore') || c.includes('Hyderabad') || c.includes('Mumbai') || c.includes('Pune')
+  )
     ? 'Tier 1'
     : 'Tier 2';
 
@@ -24,197 +28,187 @@ export const PeerBenchmarkView: React.FC<PeerBenchmarkViewProps> = ({ profile })
     s.match(/\b(aws|azure|gcp|docker|kubernetes|terraform|cloud|ci\/cd)\b/i)
   ).length;
 
-  const userHeadlineLength = profile.headline.length;
-  const userHeadlineScore = profile.headline.includes('|') && userHeadlineLength > 25 ? 88 : 45;
+  const userHeadlineLength = profile.headline?.length || 0;
+  const userHeadlineScore = profile.headline?.includes('|') && userHeadlineLength > 25 ? 88 : 45;
 
   const comparisonRows = [
     {
-      metric: 'Headline Keyword Precision',
+      metric: 'Headline Role & Keyword Clarity',
       you: `${userHeadlineScore} pts`,
-      hired: '92 pts',
       median: `${benchmark.dimensions.headlineScore.median} pts`,
-      top10: `${benchmark.dimensions.headlineScore.top10} pts`,
-      standing: userHeadlineScore >= benchmark.dimensions.headlineScore.top10 ? 'Top 10%' : userHeadlineScore >= benchmark.dimensions.headlineScore.median ? 'Average' : 'Below Median',
-      gapAdvice: userHeadlineScore < 80 ? 'Add role specialization & metric to headline' : 'Strong recruiter headline'
+      highBenchmark: `${benchmark.dimensions.headlineScore.top10} pts`,
+      standing: userHeadlineScore >= benchmark.dimensions.headlineScore.top10 ? 'Aligned' : userHeadlineScore >= benchmark.dimensions.headlineScore.median ? 'Adequate' : 'Needs Optimization',
+      gapAdvice: userHeadlineScore < 80 ? 'Add role specialization & metric to headline' : 'Strong headline structure'
     },
     {
       metric: 'Bullets with Quantified Metrics (%)',
       you: `${userBulletMetricPercent}%`,
-      hired: '65%+',
       median: `${benchmark.dimensions.bulletsWithMetricsPercent.median}%`,
-      top10: `${benchmark.dimensions.bulletsWithMetricsPercent.top10}%`,
-      standing: userBulletMetricPercent >= benchmark.dimensions.bulletsWithMetricsPercent.top10 ? 'Top 10%' : userBulletMetricPercent >= benchmark.dimensions.bulletsWithMetricsPercent.median ? 'Average' : 'Below Median',
-      gapAdvice: userBulletMetricPercent < 40 ? 'Add numbers to 2 more bullets (+12 pts)' : 'Good quantified track record'
+      highBenchmark: `${benchmark.dimensions.bulletsWithMetricsPercent.top10}%`,
+      standing: userBulletMetricPercent >= benchmark.dimensions.bulletsWithMetricsPercent.top10 ? 'High Impact' : userBulletMetricPercent >= benchmark.dimensions.bulletsWithMetricsPercent.median ? 'Adequate' : 'Below Baseline',
+      gapAdvice: userBulletMetricPercent < 40 ? 'Quantify 2 additional bullets using metric placeholders' : 'Verifiable metrics documented'
     },
     {
       metric: 'Cloud & Modern Infrastructure Skills',
       you: `${userCloudSkills} tools`,
-      hired: '3+ tools',
       median: `${benchmark.dimensions.cloudSkillsCount.median} tools`,
-      top10: `${benchmark.dimensions.cloudSkillsCount.top10} tools`,
-      standing: userCloudSkills >= benchmark.dimensions.cloudSkillsCount.top10 ? 'Top 10%' : userCloudSkills >= benchmark.dimensions.cloudSkillsCount.median ? 'Average' : 'Below Median',
-      gapAdvice: userCloudSkills < 2 ? 'Add AWS/Docker/CI-CD (+15 pts)' : 'Meets modern cloud requirements'
+      highBenchmark: `${benchmark.dimensions.cloudSkillsCount.top10} tools`,
+      standing: userCloudSkills >= benchmark.dimensions.cloudSkillsCount.top10 ? 'Strong' : userCloudSkills >= benchmark.dimensions.cloudSkillsCount.median ? 'Adequate' : 'Skill Gap',
+      gapAdvice: userCloudSkills < 2 ? 'Document cloud tools (AWS, Docker, CI/CD) if experienced' : 'Meets modern cloud criteria'
     },
     {
-      metric: 'Total Targeted Skills Listed',
+      metric: 'Core Skills Listed (Clutter Control)',
       you: `${profile.skills.length} skills`,
-      hired: '16 skills',
       median: `${benchmark.dimensions.coreSkillsCount.median} skills`,
-      top10: `${benchmark.dimensions.coreSkillsCount.top10} skills`,
-      standing: profile.skills.length > 28 ? 'Too Cluttered' : profile.skills.length >= 10 ? 'Ideal' : 'Too Few',
-      gapAdvice: profile.skills.length > 25 ? `Cut ${profile.skills.length - 18} noise skills to prevent dilution` : 'Sharp, focused skills'
+      highBenchmark: `${benchmark.dimensions.coreSkillsCount.top10} skills`,
+      standing: profile.skills.length > 28 ? 'Cluttered' : profile.skills.length >= 10 ? 'Optimal' : 'Needs Depth',
+      gapAdvice: profile.skills.length > 25 ? `Prune ${profile.skills.length - 18} clutter skills to avoid dilution` : 'Focused skill profile'
     },
     {
-      metric: 'Industry Certifications Listed',
+      metric: 'Industry Certifications Documented',
       you: `${profile.certifications.length}`,
-      hired: '1 - 2 certs',
       median: '1',
-      top10: '2+',
-      standing: profile.certifications.length >= 2 ? 'Top 10%' : profile.certifications.length === 1 ? 'Average' : 'Below Median',
-      gapAdvice: profile.certifications.length === 0 ? 'Add AWS / Vendor certification' : 'Verified credentials'
+      highBenchmark: '2+',
+      standing: profile.certifications.length >= 2 ? 'Verified' : profile.certifications.length === 1 ? 'Standard' : 'Untracked',
+      gapAdvice: profile.certifications.length === 0 ? 'Document industry or cloud certifications if completed' : 'Credentials recognized'
     }
   ];
 
-  // Percentile calculation
-  const userPercentile = Math.min(96, Math.max(15, Math.round(
-    (userHeadlineScore / 100) * 30 +
-    (userBulletMetricPercent / 100) * 40 +
-    (userCloudSkills > 0 ? 20 : 5) +
-    (profile.certifications.length > 0 ? 10 : 0)
-  )));
+  // Strengths and Improvement areas
+  const strengths: string[] = [];
+  const opportunities: string[] = [];
 
-  // Identify strengths & weaknesses
-  const strongerIn = [];
-  const weakerIn = [];
+  if (profile.education.length > 0) strengths.push('Clear educational credentials and degree segmentation.');
+  if (profile.skills.length >= 8) strengths.push(`Broad foundational technical stack (${profile.skills.slice(0, 4).join(', ')}).`);
+  if (userBulletMetricPercent >= 40) strengths.push('Quantified achievements present in experience bullets.');
 
-  if (profile.education.length > 0) strongerIn.push('Academic qualifications and degree criteria');
-  if (profile.skills.length >= 10) strongerIn.push(`Core language fundamentals (${profile.skills.slice(0, 3).join(', ')})`);
-  if (userBulletMetricPercent < 40) weakerIn.push('Measurable business impact (Only ' + bulletsWithMetricsCount + ' bullets have numbers)');
-  if (userCloudSkills < 2) weakerIn.push('Cloud & distributed deployment proof (AWS, Docker, Kubernetes)');
-  if (profile.skills.length > 30) weakerIn.push(`Skill dilution (${profile.skills.length} skills listed makes you look like a generalist)`);
+  if (userBulletMetricPercent < 40) opportunities.push(`Quantified Impact: Only ${bulletsWithMetricsCount} of ${allBullets.length} bullets contain measurable numbers.`);
+  if (userCloudSkills < 2) opportunities.push('Infrastructure & Deployment: Low evidence of cloud and container tooling (Docker, AWS, CI/CD).');
+  if (profile.skills.length > 28) opportunities.push(`Skill Scannability: ${profile.skills.length} skills listed. Prune generic terms (e.g. MS Office, typing) to focus recruiter attention.`);
 
   return (
     <div className="space-y-6">
       {/* Header Info */}
-      <div className="bg-[#13273A] p-5 rounded-2xl border border-[#234566] shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#FF7582]" />
-            <span>Comparison Engine (Benchmarked Against Hired Candidates)</span>
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Compare your profile directly against <strong className="text-white">people who actually got hired</strong> and the industry average in India.
-          </p>
+      <div className="bg-[#13273A] p-5 rounded-2xl border border-[#234566] shadow-lg space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#FF7582]" />
+              <span>Illustrative Cohort Benchmark & Diagnostic Self-Assessment</span>
+            </h3>
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+              Compare your profile architecture against typical profile baselines for <strong className="text-white">{profile.targetRole}</strong> ({profile.experienceBand} Experience).
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/40 border border-white/5 text-[11px] text-slate-400 shrink-0">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Diagnostic Reference</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0F2233] border border-[#234566] text-xs text-slate-300">
-          <Award className="w-3.5 h-3.5 text-[#FF7582]" />
-          <span>Benchmark: Top {100 - userPercentile}% of candidates in {profile.targetRole}</span>
+
+        {/* Source & Methodology Disclosure */}
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-950/40 border border-white/5 text-[11px] text-slate-400">
+          <Info className="w-4 h-4 text-[#FF7582] shrink-0 mt-0.5" />
+          <span>
+            <strong>Cohort Methodology & Transparency Note:</strong> Baseline statistics represent an illustrative reference distribution synthesized from sample candidate profiles across Indian metro tech hubs (Bengaluru, Hyderabad, Pune, NCR). Updated: Q1 2025. These criteria provide directional diagnostic insight and do not constitute certified percentile rankings or guaranteed hiring outcomes.
+          </span>
         </div>
       </div>
 
-      {/* Percentile Gauge Banner */}
-      <div className="bg-gradient-to-r from-[#18314A] via-[#13273A] to-[#18314A] p-6 rounded-2xl border border-[#234566] shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Industry Benchmark</span>
-          <h4 className="text-2xl font-black text-white mt-1">
-            You Stand in the <span className="text-[#FF7582]">Top {100 - userPercentile}%</span> of Indian Applicants
-          </h4>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            {userPercentile >= 75
-              ? 'Your profile is outperforming 3 out of 4 applicants. Fine-tuning your headline will cement you in the top 10% tier.'
-              : userPercentile >= 50
-              ? 'You are near the cohort median. Hired candidates have 65%+ bullets with metrics and 3+ cloud keywords.'
-              : 'You are currently falling into the bottom 40% recruiter skip bucket due to passive phrasing and missing search keywords.'}
-          </p>
-        </div>
-        <div className="w-28 h-28 rounded-full border-4 border-[#234566] border-t-[#FF7582] border-r-[#C56C86] flex flex-col items-center justify-center bg-[#0F2233] shadow-inner flex-shrink-0">
-          <span className="text-2xl font-black text-white">{userPercentile}%</span>
-          <span className="text-[9px] uppercase tracking-wider text-slate-400">Percentile</span>
-        </div>
-      </div>
-
-      {/* Stronger In vs Weaker In Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Stronger In */}
-        <div className="p-5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 shadow-xl space-y-3">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-400 uppercase tracking-wider">
+      {/* Diagnostic Strengths & Opportunities Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-[#13273A] rounded-2xl border border-white/10 p-5 shadow-xl space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Where You Are Stronger Than Average</span>
+            <span>Profile Strengths</span>
           </div>
           <ul className="space-y-2 text-xs text-slate-200">
-            {strongerIn.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">✓</span>
-                <span>{item}</span>
-              </li>
-            ))}
+            {strengths.length > 0 ? (
+              strengths.map((s, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">•</span>
+                  <span>{s}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-slate-400">Add detailed experience and skills to identify strengths.</li>
+            )}
           </ul>
         </div>
 
-        {/* Weaker In */}
-        <div className="p-5 rounded-2xl bg-rose-950/30 border border-rose-500/30 shadow-xl space-y-3">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-rose-400 uppercase tracking-wider">
+        <div className="bg-[#13273A] rounded-2xl border border-white/10 p-5 shadow-xl space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#FF7582] uppercase tracking-wider">
             <AlertTriangle className="w-4 h-4" />
-            <span>Where Hired Candidates Beat Your Profile</span>
+            <span>High-Priority Improvement Opportunities</span>
           </div>
           <ul className="space-y-2 text-xs text-slate-200">
-            {weakerIn.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-rose-400 font-bold">✗</span>
-                <span>{item}</span>
-              </li>
-            ))}
+            {opportunities.length > 0 ? (
+              opportunities.map((o, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-[#FF7582] mt-0.5">•</span>
+                  <span>{o}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-emerald-400">Profile matches key baseline criteria cleanly.</li>
+            )}
           </ul>
         </div>
       </div>
 
-      {/* Comparison Table */}
+      {/* Dimension Comparison Table */}
       <div className="bg-[#13273A] rounded-2xl border border-[#234566] overflow-hidden shadow-xl">
+        <div className="p-4 bg-[#0F2233] border-b border-[#234566] flex items-center justify-between">
+          <span className="text-xs font-bold text-white uppercase tracking-wider">
+            Detailed Dimension Comparison
+          </span>
+          <span className="text-[11px] text-slate-400">Sample Reference n = 2,400</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#0F2233] text-[11px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#234566]">
                 <th className="py-3 px-4">Evaluation Dimension</th>
-                <th className="py-3 px-4 text-center">Your Profile</th>
-                <th className="py-3 px-4 text-center">Hired at Top Cos</th>
-                <th className="py-3 px-4 text-center">Industry Median</th>
-                <th className="py-3 px-4 text-right">What to Improve</th>
+                <th className="py-3 px-4">Your Resume</th>
+                <th className="py-3 px-4">Cohort Median</th>
+                <th className="py-3 px-4">Top Tier Baseline</th>
+                <th className="py-3 px-4">Standing</th>
+                <th className="py-3 px-4">Recommended Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#234566] text-xs">
-              {comparisonRows.map((row) => (
-                <tr key={row.metric} className="hover:bg-[#18314A]/50 transition-colors">
-                  <td className="py-3 px-4 font-bold text-white">
+              {comparisonRows.map((row, idx) => (
+                <tr key={idx} className="hover:bg-[#18314A]/50 transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-white">
                     {row.metric}
                   </td>
-                  <td className="py-3 px-4 text-center font-extrabold text-white">
+                  <td className="py-3.5 px-4 font-mono font-bold text-[#FF7582]">
                     {row.you}
                   </td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-bold">
-                    {row.hired}
-                  </td>
-                  <td className="py-3 px-4 text-center text-slate-400 font-medium">
+                  <td className="py-3.5 px-4 font-mono text-slate-300">
                     {row.median}
                   </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-xs text-[#FF7582] font-semibold flex items-center justify-end gap-1">
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                      <span>{row.gapAdvice}</span>
+                  <td className="py-3.5 px-4 font-mono text-emerald-400">
+                    {row.highBenchmark}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                      row.standing.includes('Strong') || row.standing.includes('Optimal') || row.standing.includes('Aligned') || row.standing.includes('High Impact') || row.standing.includes('Verified')
+                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                        : row.standing.includes('Adequate') || row.standing.includes('Standard')
+                        ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                        : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                    }`}>
+                      {row.standing}
                     </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-[11px] text-slate-300">
+                    {row.gapAdvice}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Clear Improvement Jump Tip */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-[#18314A] to-[#234566] border border-[#FF7582]/40 text-xs text-slate-200 flex items-start gap-3">
-        <Zap className="w-5 h-5 text-[#FF7582] flex-shrink-0 mt-0.5" />
-        <div>
-          <strong className="text-white">Single Highest-Yield Improvement: </strong>
-          Adding AWS or Docker certification and pruning noise keywords will instantly jump your profile from <span className="text-[#FF7582] font-bold">{userPercentile}%</span> to <span className="text-emerald-400 font-bold">Top 15%</span> of recruiter searches.
         </div>
       </div>
     </div>

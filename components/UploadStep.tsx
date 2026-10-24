@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { UploadCloud, FileText, Link2, ShieldCheck, ArrowRight, UserCheck, AlertCircle, Lock } from 'lucide-react';
+import { UploadCloud, FileText, Link2, ShieldCheck, ArrowRight, UserCheck, AlertCircle, Info, Lock } from 'lucide-react';
 import { extractTextFromFile } from '@/services/parser';
 import { SEEDED_PROFILES } from '@/data/seeded-profiles';
 import { PrivacyNoticeModal } from '@/components/PrivacyNoticeModal';
@@ -15,21 +17,36 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'paste' | 'url'>('upload');
   const [pastedText, setPastedText] = useState('');
-  const [profileUrl, setProfileUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [dragActive, setDragActive] = useState(false);
-
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     setIsProcessing(true);
     setErrorMsg('');
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'doc') {
+      setErrorMsg('Legacy .doc binary format is not supported. Please save as .docx or .pdf, or paste your resume text directly.');
+      setIsProcessing(false);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg(`File exceeds the 5MB size limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please upload a smaller file or paste text.`);
+      setIsProcessing(false);
+      return;
+    }
+
     try {
       const text = await extractTextFromFile(file);
+      if (!text || text.trim().length < 40) {
+        throw new Error('Document contained insufficient readable text. If this is a scanned PDF, please paste your resume text directly.');
+      }
       onParsedTextReady(text, file.name);
     } catch (err: unknown) {
-      setErrorMsg((err as Error)?.message || 'Failed to extract resume text.');
+      setErrorMsg((err as Error)?.message || 'Failed to extract text from resume file.');
     } finally {
       setIsProcessing(false);
     }
@@ -43,81 +60,66 @@ export const UploadStep: React.FC<UploadStepProps> = ({
     }
   };
 
-  const handleUrlSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profileUrl.trim()) return;
-
-    setIsProcessing(true);
-    setErrorMsg('');
-
-    // Simulate URL extraction or advise fallback
-    setTimeout(() => {
-      // Due to LinkedIn/Naukri auth walls, provide clear guidance & simulated extraction
-      if (profileUrl.toLowerCase().includes('linkedin.com') || profileUrl.toLowerCase().includes('naukri.com')) {
-        // Fallback or demo extract
-        const sampleText = `Candidate Profile Imported via ${profileUrl}\nFull Stack Software Engineer\nBengaluru, Karnataka\n\nExperience:\nSoftware Engineer (2022 - Present)\n- Responsible for building APIs in Node.js and React frontend\n- Maintained database and deployed code\n\nSkills:\nJavaScript, React, Node.js, Express, MongoDB, SQL, Git, HTML, CSS`;
-        onParsedTextReady(sampleText, 'Imported Profile');
-      } else {
-        setErrorMsg('Public profile URL could not be parsed directly. Please paste your resume text or upload your PDF.');
-        setIsProcessing(false);
-      }
-    }, 800);
-  };
-
   const handlePasteSubmit = () => {
-    if (pastedText.trim().length < 50) {
-      setErrorMsg('Please paste at least 50 characters of resume text to analyze.');
+    const trimmed = pastedText.trim();
+    if (trimmed.length < 50) {
+      setErrorMsg('Please paste at least 50 characters of resume text to perform an accurate profile audit.');
       return;
     }
-    onParsedTextReady(pastedText, 'Pasted Resume');
+    setErrorMsg('');
+    onParsedTextReady(trimmed, 'Pasted Resume');
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Hero Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#725A7A]/30 border border-[#C56C86]/30 text-xs text-[#FF7582] font-semibold mb-4">
-          <span>🚀 Step 1 of 4: Resume Intake</span>
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#725A7A]/30 border border-[#C56C86]/30 text-xs text-[#FF7582] font-semibold">
+          <span>Step 1 of 4: Resume Intake</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
-          Why Are Indian Recruiters <span className="bg-gradient-to-r from-[#FF7582] via-[#C56C86] to-[#725A7A] bg-clip-text text-transparent">Skipping Your Profile?</span>
+        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          Find Out Why Recruiters <span className="bg-gradient-to-r from-[#FF7582] via-[#C56C86] to-[#725A7A] bg-clip-text text-transparent">Skip Your Resume</span>
         </h1>
         <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto">
-          We simulate how recruiters scan Naukri & LinkedIn in <strong className="text-white">6 seconds</strong>, catch missing search keywords, and give you an exact 7-day action plan.
+          Simulate how recruiters scan your resume in 6 seconds. Identify missing keywords, fix passive bullets with fact-preserving rewrites, and follow a practical 7-day checklist.
         </p>
       </div>
 
       {/* Seeded Demo Test Drive Banner */}
-      <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#13273A] via-[#18314A] to-[#13273A] border border-[#234566] shadow-xl">
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#13273A] via-[#18314A] to-[#13273A] border border-[#234566] shadow-xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <UserCheck className="w-4 h-4 text-[#FF7582]" />
-              <span className="text-sm font-bold text-white">Instant 1-Click Test Drive (Pre-loaded Real Profiles)</span>
+              <span className="text-sm font-bold text-white">Explore Sample Reports (Illustrative Demos)</span>
             </div>
-            <p className="text-xs text-slate-400">See how real candidates score before uploading your own resume:</p>
+            <p className="text-xs text-slate-400">See how real candidate profiles are evaluated before uploading your own resume:</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full sm:w-auto">
-            {Object.entries(SEEDED_PROFILES).map(([key, p]) => (
-              <button
-                key={key}
-                onClick={() => onSelectSeededProfile(key)}
-                className="text-left px-3 py-2 rounded-xl bg-[#0F2233] hover:bg-[#725A7A]/50 border border-[#234566] hover:border-[#FF7582]/50 transition-all text-xs cursor-pointer group"
-              >
-                <div className="font-bold text-white group-hover:text-[#FF7582] transition-colors">{p.name.split(' ')[0]}</div>
-                <div className="text-[10px] text-slate-400 truncate">{p.targetRole}</div>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => onSelectSeededProfile('arjun')}
+              className="text-left px-3.5 py-2 rounded-xl bg-[#0F2233] hover:bg-[#725A7A]/50 border border-[#234566] hover:border-[#FF7582]/50 transition-all text-xs cursor-pointer group"
+            >
+              <div className="font-bold text-white group-hover:text-[#FF7582] transition-colors">Arjun (3 Yrs · Java Backend)</div>
+              <div className="text-[10px] text-slate-400">Experienced Profile Demo</div>
+            </button>
+            <button
+              onClick={() => onSelectSeededProfile('priya')}
+              className="text-left px-3.5 py-2 rounded-xl bg-[#0F2233] hover:bg-[#725A7A]/50 border border-[#234566] hover:border-[#FF7582]/50 transition-all text-xs cursor-pointer group"
+            >
+              <div className="font-bold text-white group-hover:text-emerald-400 transition-colors">Priya (Fresher · CSE)</div>
+              <div className="text-[10px] text-slate-400">Fresher Reweighted Model Demo</div>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Intake Box */}
-      <div className="bg-[#13273A] rounded-2xl border border-[#234566] p-6 sm:p-8 shadow-2xl">
+      <div className="bg-[#14273A] rounded-2xl border border-white/10 p-6 sm:p-8 shadow-2xl space-y-6">
         {/* Intake Tabs */}
-        <div className="flex border-b border-[#234566] mb-6">
+        <div className="flex border-b border-white/10">
           <button
-            onClick={() => setActiveTab('upload')}
+            onClick={() => { setActiveTab('upload'); setErrorMsg(''); }}
             className={`flex items-center gap-2 pb-3 px-4 font-semibold text-sm transition-all border-b-2 cursor-pointer ${
               activeTab === 'upload'
                 ? 'border-[#FF7582] text-[#FF7582]'
@@ -128,7 +130,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({
             Upload PDF / DOCX
           </button>
           <button
-            onClick={() => setActiveTab('paste')}
+            onClick={() => { setActiveTab('paste'); setErrorMsg(''); }}
             className={`flex items-center gap-2 pb-3 px-4 font-semibold text-sm transition-all border-b-2 cursor-pointer ${
               activeTab === 'paste'
                 ? 'border-[#FF7582] text-[#FF7582]'
@@ -139,7 +141,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({
             Paste Resume Text
           </button>
           <button
-            onClick={() => setActiveTab('url')}
+            onClick={() => { setActiveTab('url'); setErrorMsg(''); }}
             className={`flex items-center gap-2 pb-3 px-4 font-semibold text-sm transition-all border-b-2 cursor-pointer ${
               activeTab === 'url'
                 ? 'border-[#FF7582] text-[#FF7582]'
@@ -147,13 +149,13 @@ export const UploadStep: React.FC<UploadStepProps> = ({
             }`}
           >
             <Link2 className="w-4 h-4" />
-            Naukri / LinkedIn URL
+            Profile URL Guidance
           </button>
         </div>
 
         {errorMsg && (
-          <div className="mb-6 p-3 rounded-xl bg-red-950/50 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <div className="p-3.5 rounded-xl bg-red-950/50 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -168,7 +170,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({
               className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer ${
                 dragActive
                   ? 'border-[#FF7582] bg-[#FF7582]/10 scale-[1.01]'
-                  : 'border-[#234566] hover:border-[#C56C86] bg-[#0F2233]/60'
+                  : 'border-white/10 hover:border-[#C56C86] bg-slate-950/40'
               }`}
               onClick={() => document.getElementById('resume-file-input')?.click()}
             >
@@ -176,26 +178,26 @@ export const UploadStep: React.FC<UploadStepProps> = ({
                 type="file"
                 id="resume-file-input"
                 className="hidden"
-                accept=".pdf,.docx,.doc,.txt"
+                accept=".pdf,.docx,.txt"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
                     handleFileUpload(e.target.files[0]);
                   }
                 }}
               />
-              <div className="w-16 h-16 rounded-2xl bg-[#18314A] border border-[#234566] flex items-center justify-center mx-auto mb-4 text-[#FF7582]">
+              <div className="w-16 h-16 rounded-2xl bg-[#14273A] border border-white/10 flex items-center justify-center mx-auto mb-4 text-[#FF7582]">
                 <UploadCloud className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-bold text-white mb-1">
-                {isProcessing ? 'Extracting Text & Entities...' : 'Drop your resume file here, or browse'}
+                {isProcessing ? 'Extracting Resume Text...' : 'Drop your resume file here, or click to browse'}
               </h3>
-              <p className="text-xs text-slate-400 mb-4">Supports PDF, DOCX, DOC, or TXT up to 10MB</p>
+              <p className="text-xs text-slate-400 mb-4">Supports PDF, DOCX, or TXT up to 5MB (processed locally)</p>
               <button
                 type="button"
                 disabled={isProcessing}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs shadow-lg shadow-[#FF7582]/20 hover:opacity-95 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 font-bold text-xs shadow-lg shadow-[#FF7582]/20 hover:opacity-95 transition-all cursor-pointer"
               >
-                {isProcessing ? 'Processing File...' : 'Select File from Computer'}
+                {isProcessing ? 'Processing File...' : 'Select File from Device'}
               </button>
             </div>
           </div>
@@ -203,82 +205,96 @@ export const UploadStep: React.FC<UploadStepProps> = ({
 
         {/* Tab 2: Paste Raw Text */}
         {activeTab === 'paste' && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-2">
-              Paste full resume text or profile content:
-            </label>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-300">
+              <label className="font-semibold">
+                Paste your full resume text (Summary, Work History, Education, Skills):
+              </label>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {pastedText.length} characters {pastedText.length >= 50 ? '✓' : '(minimum 50 required)'}
+              </span>
+            </div>
             <textarea
-              rows={9}
+              rows={10}
               value={pastedText}
               onChange={(e) => setPastedText(e.target.value)}
-              placeholder="Paste your resume content here (Summary, Work History, Education, Skills)..."
-              className="w-full rounded-xl bg-[#0F2233] border border-[#234566] p-4 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FF7582]"
+              placeholder="Paste your resume content here..."
+              className="w-full rounded-xl bg-slate-950/60 border border-white/10 p-4 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FF7582]"
             />
-            <div className="flex justify-end mt-4">
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[11px] text-slate-400">
+                Tip: Copy text directly from your resume document or LinkedIn profile.
+              </span>
               <button
                 type="button"
                 onClick={handlePasteSubmit}
-                disabled={!pastedText.trim()}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs shadow-lg hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
+                disabled={pastedText.trim().length < 50}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 font-bold text-xs shadow-lg hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer"
               >
-                <span>Continue to Target Role</span>
+                <span>Proceed to Data Review</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Tab 3: URL Intake */}
+        {/* Tab 3: URL Intake Guidance (Honest, No Scraping) */}
         {activeTab === 'url' && (
-          <form onSubmit={handleUrlSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-2">
-                Naukri / LinkedIn Public Profile Link:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={profileUrl}
-                  onChange={(e) => setProfileUrl(e.target.value)}
-                  placeholder="https://www.naukri.com/profile/... or https://www.linkedin.com/in/..."
-                  className="flex-1 rounded-xl bg-[#0F2233] border border-[#234566] px-4 py-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FF7582]"
-                />
-                <button
-                  type="submit"
-                  disabled={!profileUrl.trim() || isProcessing}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs shadow-lg hover:opacity-95 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>{isProcessing ? 'Fetching...' : 'Import Profile'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+          <div className="p-6 rounded-2xl bg-slate-950/40 border border-white/5 space-y-4 text-xs text-slate-300">
+            <div className="flex items-center gap-2.5 text-white font-bold text-sm">
+              <Lock className="w-4 h-4 text-[#FF7582]" />
+              <span>Public Profile Authentication Protection</span>
+            </div>
+            <p className="leading-relaxed">
+              LinkedIn and Naukri protect member profiles behind login authentication and terms of service. We <strong>never request your passwords or attempt unauthorized account scraping</strong>.
+            </p>
+            <div className="p-4 rounded-xl bg-[#14273A] border border-white/10 space-y-3">
+              <h4 className="font-bold text-white text-xs">How to import in under 30 seconds:</h4>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[#FF7582]">1.</span>
+                  <span><strong>From LinkedIn:</strong> Go to your profile &rarr; click <strong>"More"</strong> next to your headline &rarr; select <strong>"Save to PDF"</strong> &rarr; upload the PDF file in the Upload tab.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[#FF7582]">2.</span>
+                  <span><strong>From Naukri:</strong> Copy your profile summary, experience bullets, and key skills &rarr; paste directly into the <strong>"Paste Resume Text"</strong> tab.</span>
+                </div>
               </div>
             </div>
-            <p className="text-[11px] text-slate-400">
-              Note: Because LinkedIn and Naukri frequently require login, if direct fetch fails we will seamlessly guide you to paste your resume text.
-            </p>
-          </form>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('upload')}
+                className="px-4 py-2 rounded-xl bg-[#18314A] hover:bg-[#725A7A] text-white font-bold text-xs cursor-pointer transition-colors"
+              >
+                Switch to PDF Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('paste')}
+                className="px-4 py-2 rounded-xl bg-[#18314A] hover:bg-[#725A7A] text-white font-bold text-xs cursor-pointer transition-colors"
+              >
+                Switch to Paste Text
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* Privacy Footer Guarantee */}
-        <div className="mt-8 pt-6 border-t border-[#234566] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        {/* Privacy Transparency Footer */}
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span>Client-side execution only. Your resume never leaves your browser. Zero tracking.</span>
+            <span>Local in-browser parsing. Zero automated recruiter sharing. No passwords required.</span>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
-            <span>DPDP Act 2023 Compliant</span>
-            <span>·</span>
-            <button
-              type="button"
-              onClick={() => setIsPrivacyModalOpen(true)}
-              className="text-[#FF7582] hover:underline font-semibold cursor-pointer"
-            >
-              Privacy Notice
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsPrivacyModalOpen(true)}
+            className="text-[#FF7582] hover:underline font-semibold cursor-pointer"
+          >
+            Privacy Notice & Data Handling
+          </button>
         </div>
 
-        {/* DPDP Privacy Notice Modal */}
         <PrivacyNoticeModal
           isOpen={isPrivacyModalOpen}
           onClose={() => setIsPrivacyModalOpen(false)}

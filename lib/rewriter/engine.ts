@@ -20,27 +20,33 @@ export function rewriteBullet(originalText: string, customMetric?: string): Bull
   const safeText = template.safePattern(cleanSubject, '', '');
   const metricText = activeMetric 
     ? template.metricPattern(cleanSubject, '', activeMetric, '') 
-    : template.metricPattern(cleanSubject, '', '[Insert your metric, e.g. 35% latency / 20k TPS]', '');
-  const impactText = template.impactPattern(cleanSubject, activeMetric ? `achieving ${activeMetric} and zero downtime` : '', '');
+    : template.metricPattern(cleanSubject, '', '[add verified metric, e.g. X% throughput gain or Y TPS]', '');
+  const impactText = template.impactPattern(
+    cleanSubject,
+    activeMetric ? `achieving ${activeMetric} while maintaining system stability` : '',
+    ''
+  );
 
   const variants: RewriteVariant[] = [
     {
       type: 'SAFE',
       text: safeText,
-      reason: '100% faithful to original facts. Upgrades passive tone to strong active verbs.',
+      reason: '100% fact-preserving. Upgrades passive openings to active ownership without adding unverified claims.',
       metricsNeeded: false
     },
     {
       type: 'METRIC',
       text: metricText,
-      reason: 'Adds measurable proof of outcome. Proven to increase recruiter shortlists by 4x.',
+      reason: activeMetric 
+        ? 'Integrates your verified metric into an impact-focused structure.' 
+        : 'Includes an explicit placeholder [add verified metric] for your genuine performance numbers.',
       metricsNeeded: !activeMetric,
       needsInput: !activeMetric ? 'metric' : null
     },
     {
       type: 'IMPACT',
       text: impactText,
-      reason: 'Positions you at a Senior / SDE-2 level by focusing on business scale and architectural reliability.',
+      reason: 'Highlights technical delivery and architectural rigor without fabricating statistics.',
       metricsNeeded: false
     }
   ];

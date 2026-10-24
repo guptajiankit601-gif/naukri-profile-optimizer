@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { ParsedProfile, KeywordItem } from '@/types';
 import { ROLE_KEYWORDS_DATA } from '@/data/keywords';
-import { Plus, Scissors, Sparkles, AlertTriangle, CheckCircle2, Volume2, ShieldAlert } from 'lucide-react';
+import { Plus, Scissors, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert, Info, BookOpen } from 'lucide-react';
 
 interface KeywordGapCheckerProps {
   profile: ParsedProfile;
@@ -21,7 +23,7 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
   const fullTextLower = (profile.rawText + ' ' + profile.skills.join(' ') + ' ' + profile.headline).toLowerCase();
 
   // Compute keyword statuses
-  const keywordsWithStatus: KeywordItem[] = roleKeywordsRaw.map(kw => {
+  const keywordsWithStatus: (KeywordItem & { priorityTier: string })[] = roleKeywordsRaw.map(kw => {
     const regex = new RegExp(`\\b${kw.name.toLowerCase()}\\b`, 'gi');
     const matches = fullTextLower.match(regex);
     const count = matches ? matches.length : 0;
@@ -35,8 +37,14 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
       else status = 'missing';
     }
 
+    let priorityTier = 'Tier 2 (High Value)';
+    if (kw.category === 'must-have') priorityTier = 'Tier 1 (Core Must-Have)';
+    else if (kw.category === 'booster') priorityTier = 'Tier 3 (Complementary)';
+    else if (kw.category === 'distractor') priorityTier = 'Low Signal Clutter';
+
     return {
       ...kw,
+      priorityTier,
       countInProfile: count,
       status
     };
@@ -55,7 +63,7 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
         ...profile,
         skills: [...profile.skills, kwName]
       });
-      showToast(`+ Added "${kwName}" to your skills! Score improved.`);
+      showToast(`Added verified skill "${kwName}" to profile.`);
     }
   };
 
@@ -66,7 +74,7 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
         ...profile,
         headline: updatedHeadline
       });
-      showToast(`⚡ Boosted "${kwName}" into headline! Recruiter visibility maximized.`);
+      showToast(`Featured "${kwName}" in headline.`);
     }
   };
 
@@ -75,32 +83,32 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
       ...profile,
       skills: profile.skills.filter(s => !s.toLowerCase().includes(kwName.toLowerCase()))
     });
-    showToast(`✂ Cut noise keyword "${kwName}". Visual scan clarity improved.`);
+    showToast(`Removed clutter skill "${kwName}".`);
   };
 
   return (
     <div className="space-y-6">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Header Info Banner */}
-      <div className="bg-[#13273A] p-5 rounded-2xl border border-[#234566] shadow-lg">
+      <div className="bg-[#13273A] p-5 rounded-2xl border border-[#234566] shadow-lg space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#FF7582]" />
-              <span>Naukri & ATS Recruiter Keyword Gap Matrix</span>
+              <span>Target Role Keyword Alignment Matrix</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Indian recruiters filter candidates by exact-match search volume. Having 2+ mentions moves your profile into top search results.
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+              Evaluates your resume against curated industry search keywords for <strong className="text-white">{profile.targetRole}</strong>.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs shrink-0">
             <span className="text-slate-400">Total Skills:</span>
             <span className={`font-bold px-2.5 py-1 rounded-lg ${isSkillCountCluttered ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300'}`}>
               {skillCount} Listed
@@ -108,13 +116,21 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
           </div>
         </div>
 
+        {/* Ethical Tip / Distinction Banner */}
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-950/40 border border-white/5 text-[11px] text-slate-300">
+          <Info className="w-4 h-4 text-[#FF7582] shrink-0 mt-0.5" />
+          <span>
+            <strong>Distinguishing 'Missing from Resume' vs 'Skills You Do Not Have':</strong> If a missing term represents technology you have genuinely used, add it to your skills or experience bullets. If you do not possess this skill, treat it as an illustrative learning roadmap rather than adding it merely for keyword density.
+          </span>
+        </div>
+
         {/* Skill Count Warning */}
         {isSkillCountCluttered && (
-          <div className="mt-4 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-3">
+          <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-3">
             <ShieldAlert className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <strong className="font-bold text-white">Skill Overload Warning: </strong>
-              You list {skillCount} skills. Recruiters scan at most 15-20. Cut {skillCount - 18} clutter skills below to avoid looking like a generalist.
+              <strong className="font-bold text-white">Skill Density Advisory: </strong>
+              You currently list {skillCount} skills. Recruiters scan for 12-20 core competencies. Pruning non-essential clutter prevents your core technical strengths from getting diluted.
             </div>
           </div>
         )}
@@ -132,7 +148,7 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
                 : 'bg-[#13273A] text-slate-300 border-[#234566] hover:border-[#725A7A]'
             }`}
           >
-            {cat === 'all' ? 'All Keywords' : cat}
+            {cat === 'all' ? 'All Keywords' : cat === 'must-have' ? 'Tier 1 (Core)' : cat === 'high-value' ? 'Tier 2 (High Value)' : cat === 'booster' ? 'Tier 3 (Complementary)' : 'Clutter Words'}
           </button>
         ))}
       </div>
@@ -144,11 +160,10 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
             <thead>
               <tr className="bg-[#0F2233] text-[11px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-[#234566]">
                 <th className="py-3 px-4">Keyword</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Searches / Mo</th>
-                <th className="py-3 px-4">Your Status</th>
-                <th className="py-3 px-4">Recruiter Advice</th>
-                <th className="py-3 px-4 text-right">Instant Action</th>
+                <th className="py-3 px-4">Recruiter Priority</th>
+                <th className="py-3 px-4">Status in Resume</th>
+                <th className="py-3 px-4">Recruiter Context</th>
+                <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#234566] text-xs">
@@ -161,12 +176,11 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
                 return (
                   <tr key={kw.name} className="hover:bg-[#18314A]/50 transition-colors">
                     {/* Keyword Name */}
-                    <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
-                      {isNoise && <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                    <td className="py-3 px-4 font-bold text-white">
                       <span>{kw.name}</span>
                     </td>
 
-                    {/* Category */}
+                    {/* Category & Priority Tier */}
                     <td className="py-3 px-4">
                       <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
                         kw.category === 'must-have'
@@ -177,13 +191,8 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
                           ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                           : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
                       }`}>
-                        {kw.category}
+                        {kw.priorityTier}
                       </span>
-                    </td>
-
-                    {/* Monthly Searches */}
-                    <td className="py-3 px-4 text-slate-300 font-medium">
-                      {kw.monthlySearches.toLocaleString('en-IN')} /mo
                     </td>
 
                     {/* Status */}
@@ -197,25 +206,25 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
                       {isWeak && (
                         <span className="inline-flex items-center gap-1 text-amber-400 font-semibold text-[11px]">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Weak (1x only)</span>
+                          <span>1 Mention (Weak)</span>
                         </span>
                       )}
                       {isMissing && !isNoise && (
                         <span className="inline-flex items-center gap-1 text-rose-400 font-semibold text-[11px]">
                           <span className="w-2 h-2 rounded-full bg-rose-400" />
-                          <span>Missing (0x)</span>
+                          <span>Absent from Resume</span>
                         </span>
                       )}
                       {isNoise && (
                         <span className="inline-flex items-center gap-1 text-amber-400 font-semibold text-[11px]">
-                          <Volume2 className="w-3.5 h-3.5" />
-                          <span>Noise / Clutter</span>
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>Clutter Keyword</span>
                         </span>
                       )}
                     </td>
 
                     {/* Recruiter Advice */}
-                    <td className="py-3 px-4 text-slate-400 text-[11px] max-w-xs leading-relaxed">
+                    <td className="py-3 px-4 text-slate-300 text-[11px] max-w-xs leading-relaxed">
                       {kw.recommendation}
                     </td>
 
@@ -225,27 +234,28 @@ export const KeywordGapChecker: React.FC<KeywordGapCheckerProps> = ({ profile, o
                         <button
                           onClick={() => handleCutNoise(kw.name)}
                           className="px-2.5 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-500/40 text-red-300 font-bold text-[10px] cursor-pointer inline-flex items-center gap-1"
+                          title="Remove clutter skill from profile"
                         >
                           <Scissors className="w-3 h-3" />
-                          <span>Cut</span>
+                          <span>Prune</span>
                         </button>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 justify-end">
                           <button
                             onClick={() => handleAddKeyword(kw.name)}
                             className="px-2.5 py-1 rounded-lg bg-[#18314A] hover:bg-[#725A7A] border border-[#234566] text-slate-200 font-bold text-[10px] cursor-pointer inline-flex items-center gap-1"
-                            title="Add to Skills section"
+                            title="Add verified skill to profile"
                           >
                             <Plus className="w-3 h-3 text-[#FF7582]" />
-                            <span>Add</span>
+                            <span>Add (If Possessed)</span>
                           </button>
                           <button
                             onClick={() => handleBoostToHeadline(kw.name)}
                             className="px-2.5 py-1 rounded-lg bg-[#FF7582]/15 hover:bg-[#FF7582]/30 border border-[#FF7582]/40 text-[#FF7582] font-bold text-[10px] cursor-pointer inline-flex items-center gap-1"
-                            title="Boost into headline for maximum recruiter visibility"
+                            title="Highlight in headline"
                           >
                             <Sparkles className="w-3 h-3" />
-                            <span>Boost</span>
+                            <span>Feature</span>
                           </button>
                         </div>
                       )}

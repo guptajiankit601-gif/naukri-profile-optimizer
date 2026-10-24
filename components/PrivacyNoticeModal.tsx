@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { X, ShieldCheck, Lock, Clock, Database, Brain, Trash2 } from 'lucide-react';
+import { X, ShieldCheck, Lock, Clock, Database, Brain, Trash2, CheckCircle2 } from 'lucide-react';
+import { useReport } from '@/lib/context/ReportContext';
 
 interface PrivacyNoticeModalProps {
   isOpen: boolean;
@@ -9,7 +10,14 @@ interface PrivacyNoticeModalProps {
 }
 
 export const PrivacyNoticeModal: React.FC<PrivacyNoticeModalProps> = ({ isOpen, onClose }) => {
+  const { profile, resetAnalysis } = useReport();
+
   if (!isOpen) return null;
+
+  const handleClearData = () => {
+    resetAnalysis();
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
@@ -21,8 +29,8 @@ export const PrivacyNoticeModal: React.FC<PrivacyNoticeModalProps> = ({ isOpen, 
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Privacy Notice (DPDP Act 2023 Alignment)</h3>
-              <p className="text-[11px] text-[#A8B8C8]">Data Fiduciary & Retention Guarantee</p>
+              <h3 className="text-base font-bold text-white">Data Handling & Privacy Transparency</h3>
+              <p className="text-[11px] text-[#A8B8C8]">Client-side processing and data protection practices</p>
             </div>
           </div>
           <button
@@ -35,63 +43,68 @@ export const PrivacyNoticeModal: React.FC<PrivacyNoticeModalProps> = ({ isOpen, 
 
         {/* Content Body */}
         <div className="py-4 space-y-4 text-xs text-slate-300 max-h-[70vh] overflow-y-auto pr-2">
-          {/* Card 1: What & Why */}
+          {/* Section 1: Client-Side Processing */}
           <div className="p-3.5 rounded-xl bg-[#14293C] border border-[#24405A] space-y-1.5">
             <div className="flex items-center gap-2 text-white font-bold text-xs">
               <Database className="w-4 h-4 text-[#FF7582]" />
-              <span>What We Collect & Why</span>
+              <span>Where Your Data is Processed</span>
             </div>
             <p className="leading-relaxed text-slate-300">
-              <strong>What we collect:</strong> Your resume text, target role title, target cities, and calculated analysis results.
-              <br />
-              <strong>Why:</strong> Strictly to evaluate your profile against Indian recruiter search heuristics, score your visibility, detect keyword gaps, rewrite bullets, and produce your 7-day action plan.
+              Resume file parsing (PDF, DOCX, TXT), section segmentation, and scoring rule evaluations run <strong>100% locally in your web browser</strong> using client-side JavaScript. Your resume document is never uploaded to an external storage bucket or sold to third-party recruiters.
             </p>
           </div>
 
-          {/* Card 2: Retention */}
-          <div className="p-3.5 rounded-xl bg-[#14293C] border border-[#24405A] space-y-1.5">
-            <div className="flex items-center gap-2 text-white font-bold text-xs">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <span>How Long We Keep Data (Automated TTL)</span>
-            </div>
-            <p className="leading-relaxed text-slate-300">
-              <strong>Guest / Anonymous Use (M2):</strong> 24 hours. Automatically purged by daily server cron at 03:00 IST without human intervention.
-              <br />
-              <strong>User Account (M3):</strong> 90 days of inactivity. User-deletable at any time with a 1-click permanent cascade forget path.
-            </p>
-          </div>
-
-          {/* Card 3: AI Minimization */}
+          {/* Section 2: AI Minimization */}
           <div className="p-3.5 rounded-xl bg-[#14293C] border border-[#24405A] space-y-1.5">
             <div className="flex items-center gap-2 text-white font-bold text-xs">
               <Brain className="w-4 h-4 text-purple-400" />
-              <span>AI Processing (Google Gemini) — OFF by Default</span>
+              <span>Optional AI Polish (Google Gemini) — OFF by Default</span>
             </div>
             <p className="leading-relaxed text-slate-300">
-              The entire application operates 100% deterministically without external APIs. If you opt into AI polishing, <strong>only the specific sentence you are actively rewriting is sent to Gemini</strong> inside isolated delimiters. Your full resume, name, phone, email, employer history, and institutions are never sent.
+              The entire core diagnostic scoring engine operates deterministically without external AI APIs. If you explicitly toggle "AI bullet polish", <strong>only the single sentence being edited is transmitted</strong> to the backend Gemini service. Full resume documents, contact details, phone numbers, and employer names are omitted from AI prompts.
             </p>
           </div>
 
-          {/* Card 4: Data Protection */}
+          {/* Section 3: Credentials & Account Privacy */}
           <div className="p-3.5 rounded-xl bg-[#14293C] border border-[#24405A] space-y-1.5">
             <div className="flex items-center gap-2 text-white font-bold text-xs">
               <Lock className="w-4 h-4 text-emerald-400" />
-              <span>Zero Selling · Zero Recruiter Sharing</span>
+              <span>Zero Password Policy · No Account Scraping</span>
             </div>
             <p className="leading-relaxed text-slate-300">
-              We never sell your resume data, never use it to train public AI models, and never share or sell contact details to recruiters or third-party lead brokers. All processing operates in India-region compliance.
+              We never ask for your Naukri or LinkedIn login passwords. We do not perform authenticated scraping of your private profile. We never monetize or broker candidate data to recruitment agencies.
             </p>
+          </div>
+
+          {/* Section 4: Clear Data Action */}
+          <div className="p-3.5 rounded-xl bg-[#14293C] border border-[#24405A] flex items-center justify-between gap-4">
+            <div>
+              <div className="font-bold text-white text-xs flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-rose-400" />
+                <span>Clear Current Resume & Session State</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Permanently erase the loaded resume and analysis report from your browser memory.
+              </p>
+            </div>
+            <button
+              onClick={handleClearData}
+              disabled={!profile}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 font-bold text-xs transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              Clear Data Now
+            </button>
           </div>
         </div>
 
         {/* Footer */}
         <div className="pt-4 border-t border-[#24405A] flex items-center justify-between">
-          <span className="text-[10px] text-slate-500">DPDP Act 2023 & Indian IT Act Compliant</span>
+          <span className="text-[10px] text-slate-400">Aligned with Indian Digital Personal Data Protection (DPDP) principles</span>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-900 font-bold text-xs hover:opacity-95 cursor-pointer"
           >
-            I Understand
+            Close Notice
           </button>
         </div>
       </div>

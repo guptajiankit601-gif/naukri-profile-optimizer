@@ -10,6 +10,8 @@ import { ScoreReport, ActionPlanItem } from '@/types';
 interface AppShellProps {
   currentScore?: number;
   scoreReport?: ScoreReport;
+  targetRoleBadge?: string;
+  isDemo?: boolean;
   actionPlan?: ActionPlanItem[];
   activeTab: string;
   onNavigateTab: (tabId: string) => void;
@@ -22,6 +24,8 @@ interface AppShellProps {
 export const AppShell: React.FC<AppShellProps> = ({
   currentScore,
   scoreReport,
+  targetRoleBadge,
+  isDemo = false,
   actionPlan,
   activeTab,
   onNavigateTab,
@@ -37,7 +41,8 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* 1. Liquid Glass Topbar */}
       <GlassMenuBar
         currentScore={currentScore}
-        targetRoleBadge="Backend Engineer · 3-5 yrs · Bengaluru"
+        targetRoleBadge={targetRoleBadge || 'Deterministic Resume Audit'}
+        isDemo={isDemo}
         onSelectSeededProfile={onSelectSeededProfile}
         onReset={onReset}
         onOpenShareCard={onOpenShareCard}
@@ -70,18 +75,18 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* 4. Footer */}
       <footer className="border-t border-white/10 py-6 px-4 text-center text-xs text-slate-400 no-print">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>Naukri Profile Optimizer · Recruiter-Perspective Analysis · Sunset Palette</span>
+          <span>Naukri Profile Optimizer · Deterministic Resume Intelligence</span>
           <div className="flex items-center gap-3">
-            <span>100% Client-Side · Zero Disk PII</span>
+            <span>Client-Side Processing · Zero Third-Party Tracking</span>
             <span>·</span>
             <button
               onClick={() => setIsPrivacyModalOpen(true)}
               className="text-[#FF7582] hover:underline font-semibold cursor-pointer"
             >
-              DPDP Privacy Notice
+              Privacy Notice
             </button>
             <span>·</span>
-            <span>v2.0.0</span>
+            <span>v2.1.0</span>
           </div>
         </div>
       </footer>

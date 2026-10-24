@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/layout/Logo';
-import { ShieldCheck, Sparkles, Heart } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { PrivacyNoticeModal } from '@/components/PrivacyNoticeModal';
 
 export const Footer: React.FC = () => {
@@ -16,13 +16,13 @@ export const Footer: React.FC = () => {
           <div className="space-y-2">
             <Logo size="md" />
             <p className="text-xs text-slate-400 max-w-sm">
-              Your profile is invisible. We show you exactly why. 100% free deterministic career intelligence for Indian tech professionals.
+              100% free, transparent resume and profile optimization intelligence for Indian tech job seekers.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300">
-            <Link href="/upload" className="hover:text-white transition-colors">
-              Audit Resume
+            <Link href="/" className="hover:text-white transition-colors">
+              Analyze Resume
             </Link>
             <Link href="/dashboard" className="hover:text-white transition-colors">
               Dashboard
@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
             </Link>
             <button
               onClick={() => setIsPrivacyOpen(true)}
-              className="hover:text-white transition-colors flex items-center gap-1 text-slate-300"
+              className="hover:text-white transition-colors flex items-center gap-1 text-slate-300 cursor-pointer"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               Privacy Notice
@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
             Disclaimer: Naukri Profile Optimizer is an independent diagnostic instrument and is not affiliated with, sponsored by, or endorsed by Info Edge (India) Ltd. or Naukri.com.
           </p>
           <div className="flex items-center gap-1 shrink-0">
-            <span>Built with precision for India’s tech workforce</span>
+            <span>Built with precision for Indian freshers & professionals</span>
           </div>
         </div>
       </div>

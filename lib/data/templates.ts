@@ -1,6 +1,10 @@
 /**
  * REWRITE TEMPLATES LIBRARY (8 Intents × 3 Levels = 24 Templates)
- * Defined per SKILL.md Section 6
+ * FACT-PRESERVING SPECIFICATION:
+ * Never invent performance metrics, percentages, revenue, user counts, throughput,
+ * certifications, or skills. Where data is missing, offer a credible qualitative rewrite
+ * and optionally a metric-ready template containing an explicit placeholder such as
+ * [add verified metric].
  */
 
 export type Intent = 'built' | 'led' | 'improved' | 'managed' | 'sold' | 'taught' | 'supported' | 'analyzed';
@@ -25,92 +29,91 @@ export const REWRITE_TEMPLATES: Record<string, RewriteTemplate> = {
   built: {
     intent: 'Creation & Development',
     safePattern: (sub, _act, tools) =>
-      `Architected and built ${sub || 'core application services'} using ${tools || 'modern industry standards'}, ensuring clean modularity.`,
+      `Architected and built ${sub || 'application components'}${tools ? ` using ${tools}` : ''}, ensuring modularity and clean code standards.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Engineered ${sub || 'production microservices'} using ${tools || 'modern tech stack'}, successfully delivering ${metric || '[X% throughput / 20k TPS]'}.`,
+      `Engineered ${sub || 'application modules'}${tools ? ` using ${tools}` : ''}, delivering ${metric || '[add verified metric, e.g. X% throughput gain or Y req/sec]'}.`,
     impactPattern: (sub, outcome, tools) =>
-      `Designed and deployed scalable ${sub || 'distributed systems'} using ${tools || 'high-availability architecture'}, driving ${outcome || '99.99% system uptime and 40% faster release velocity'}.`
+      `Designed and deployed ${sub || 'core application services'}${tools ? ` using ${tools}` : ''}, ${outcome || 'streamlining service delivery and enhancing system maintainability'}.`
   },
 
   // 2. led
   led: {
     intent: 'Leadership & Mentorship',
     safePattern: (sub, _act, tools) =>
-      `Led cross-functional execution for ${sub || 'high-priority engineering milestones'}, aligning team delivery with strategic roadmaps.`,
+      `Led cross-functional execution for ${sub || 'project milestones'}${tools ? ` using ${tools}` : ''}, aligning technical delivery with project roadmap.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Led squad of ${metric || '[4-8 engineers]'} in delivering ${sub || 'core features'} 2 weeks ahead of scheduled deadline.`,
+      `Led team of ${metric || '[add verified team size, e.g. 4 engineers]'} delivering ${sub || 'core milestones'}${tools ? ` using ${tools}` : ''} on schedule.`,
     impactPattern: (sub, outcome, tools) =>
-      `Directed technical strategy across ${sub || 'flagship initiatives'}, empowering engineering squads and achieving ${outcome || 'zero-defect releases and high team velocity'}.`
+      `Directed technical execution for ${sub || 'key engineering initiatives'}, ${outcome || 'empowering team contributors and maintaining high delivery standards'}.`
   },
 
   // 3. improved
   improved: {
     intent: 'Optimization & Speed',
     safePattern: (sub, _act, tools) =>
-      `Refactored and optimized ${sub || 'system architecture'} using ${tools || 'profiling and database indexing'}, eliminating latency bottlenecks.`,
+      `Refactored and optimized ${sub || 'system workflows'}${tools ? ` using ${tools}` : ''}, eliminating bottlenecks and enhancing maintainability.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Optimized ${sub || 'query workflows and API endpoints'}, driving a ${metric || '[35% latency reduction]'} across peak traffic hours.`,
+      `Optimized ${sub || 'system performance'}${tools ? ` using ${tools}` : ''}, achieving ${metric || '[add verified metric, e.g. X% latency drop or Y% query speedup]'}.`,
     impactPattern: (sub, outcome, tools) =>
-      `Overhauled ${sub || 'critical infrastructure'} with ${tools || 'caching and query optimization'}, resulting in ${outcome || 'substantial cloud cost savings and 99.9% reliability'}.`
+      `Overhauled ${sub || 'critical workflows'}${tools ? ` using ${tools}` : ''}, ${outcome || 'improving overall architectural resilience and operational efficiency'}.`
   },
 
   // 4. managed
   managed: {
     intent: 'Operations & Maintenance',
     safePattern: (sub, _act, tools) =>
-      `Administered and safeguarded ${sub || 'cloud infrastructure and application servers'} using ${tools || 'automated CI/CD pipelines'}.`,
+      `Administered and maintained ${sub || 'infrastructure and application environments'}${tools ? ` using ${tools}` : ''}, ensuring operational stability.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Maintained ${sub || 'production clusters and services'} maintaining ${metric || '[99.95% uptime SLA]'} across multi-region environments.`,
+      `Maintained ${sub || 'production environments'}${tools ? ` using ${tools}` : ''}, maintaining ${metric || '[add verified metric, e.g. X% SLA or Y resolution time]'}.`,
     impactPattern: (sub, outcome, tools) =>
-      `Governed end-to-end reliability for ${sub || 'critical customer-facing workloads'}, mitigating vulnerabilities and ensuring ${outcome || 'strict compliance and zero unscheduled downtime'}.`
+      `Governed end-to-end reliability for ${sub || 'production workloads'}, ${outcome || 'mitigating failure risks and upholding high service quality'}.`
   },
 
   // 5. sold
   sold: {
     intent: 'Revenue & Growth',
     safePattern: (sub, _act, tools) =>
-      `Executed strategic outbound prospecting and relationship management for ${sub || 'enterprise customer accounts'}.`,
+      `Executed strategic prospecting and stakeholder management for ${sub || 'client accounts'}${tools ? ` using ${tools}` : ''}.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Generated ${metric || '[₹1.2 Cr in qualified pipeline / 120% quota]'} by pitching ${sub || 'SaaS solutions'} to C-level stakeholders.`,
+      `Generated ${metric || '[add verified metric, e.g. ₹X in pipeline or Y% quota]'} by pitching ${sub || 'solutions'} to enterprise decision-makers.`,
     impactPattern: (sub, outcome, tools) =>
-      `Expanded enterprise client footprint across target verticals, driving ${outcome || 'exponential recurring ARR growth and high account retention'}.`
+      `Expanded client engagement across target accounts, ${outcome || 'deepening customer relationships and supporting pipeline expansion'}.`
   },
 
   // 6. taught
   taught: {
     intent: 'Training & Knowledge Sharing',
     safePattern: (sub, _act, tools) =>
-      `Facilitated technical training and comprehensive onboarding documentation for ${sub || 'engineering and product team members'}.`,
+      `Facilitated technical training and comprehensive documentation for ${sub || 'team members'}${tools ? ` using ${tools}` : ''}.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Upskilled ${metric || '[cohort of 14 junior developers]'} on ${tools || 'best practices'}, reducing onboarding ramp-up time by 40%.`,
+      `Trained ${metric || '[add verified cohort count, e.g. 8 team members]'} on ${tools || 'core technologies'}, accelerating team onboarding ramp-up.`,
     impactPattern: (sub, outcome, tools) =>
-      `Mentored cross-functional team members on ${tools || 'modern standards'}, establishing ${outcome || 'high engineering velocity and institutional best practices'}.`
+      `Established technical documentation and knowledge-sharing sessions for ${sub || 'engineering workflows'}, ${outcome || 'fostering team autonomy and institutional best practices'}.`
   },
 
   // 7. supported
   supported: {
     intent: 'Support & Triage',
     safePattern: (sub, _act, tools) =>
-      `Investigated, triaged, and resolved high-severity production defects for ${sub || 'key product integrations'}.`,
+      `Investigated, triaged, and resolved technical defects for ${sub || 'key product modules'}${tools ? ` using ${tools}` : ''}.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Triaged and resolved ${metric || '[200+ complex tickets]'} maintaining a ${metric ? '' : '[98% CSAT rating]'} under rigorous SLAs.`,
+      `Triaged and resolved ${metric || '[add verified ticket count, e.g. 50+ issues]'} with ${metric ? '' : '[add verified CSAT or turnaround time]'}.`,
     impactPattern: (sub, outcome, tools) =>
-      `Automated root-cause remediation workflows for ${sub || 'incident handling'}, minimizing escalation frequency and boosting ${outcome || 'customer satisfaction'}.`
+      `Structured incident resolution workflows for ${sub || 'customer issues'}, ${outcome || 'accelerating turnaround time and elevating user satisfaction'}.`
   },
 
   // 8. analyzed
   analyzed: {
     intent: 'Analytics & Forecasting',
     safePattern: (sub, _act, tools) =>
-      `Analyzed and modeled ${sub || 'key performance datasets'} to evaluate core operational and product trends.`,
+      `Analyzed and modeled ${sub || 'operational datasets'}${tools ? ` using ${tools}` : ''} to evaluate key performance trends.`,
     metricPattern: (sub, _act, metric, tools) =>
-      `Modeled ${sub || 'user funnel drop-offs'} using ${tools || 'analytics telemetry'}, uncovering ${metric || '[₹45L annual recovery opportunity]'}.`,
+      `Modeled ${sub || 'data telemetry'}${tools ? ` using ${tools}` : ''}, uncovering ${metric || '[add verified metric, e.g. X% discrepancy or ₹Y efficiency opportunity]'}.`,
     impactPattern: (sub, outcome, tools) =>
-      `Synthesized executive analytics and automated telemetry for ${sub || 'business critical operations'}, driving ${outcome || 'data-backed strategic decisions and 25% efficiency gains'}.`
+      `Synthesized analytics dashboards and data models for ${sub || 'stakeholders'}, ${outcome || 'enabling data-informed strategic decisions and clear visibility'}.`
   }
 };
 
-// Section 6.3: Metric Noun Mapping by Role
 export const METRIC_NOUNS: Record<string, string[]> = {
   backend: ['latency', 'throughput', 'uptime', 'cost', 'requests per second (TPS)'],
   frontend: ['load time', 'bundle size', 'Lighthouse score', 'conversion rate'],
@@ -124,14 +127,13 @@ export const METRIC_NOUNS: Record<string, string[]> = {
   ops: ['on-time delivery', 'budget variance', 'process time']
 };
 
-// Section 6.4: Reason Templates
 export const REASONS: Record<string, string> = {
-  addedVerb: 'Added a strong action verb — recruiters scan verbs before anything else.',
-  addedMetric: 'Added a measurable outcome — most hired candidates show numbers.',
-  removedPassive: 'Removed passive voice — "responsible for" reads as no ownership.',
-  replacedVague: 'Replaced a vague phrase with a specific deliverable.',
-  addedContext: 'Added tool/domain context so the recruiter knows where you applied it.',
-  addedImpact: 'Reframed to business impact — hiring managers buy outcomes, not tasks.',
-  addedScope: 'Added scale (users, team size, volume) — shows you handled real load.',
-  trimmedLength: 'Trimmed to fit — long bullets get skipped after the first line.'
+  addedVerb: 'Upgraded opening to a strong action verb (Architected, Engineered, Led, Optimized) — recruiters look for active ownership.',
+  addedMetric: 'Prepared for quantifiable proof — genuine metrics demonstrate verifiable impact.',
+  removedPassive: 'Replaced passive phrasing ("responsible for", "assisted with") with active voice.',
+  replacedVague: 'Replaced vague descriptors with specific deliverables and tools.',
+  addedContext: 'Retained specific technical context and tools without fabricating new ones.',
+  addedImpact: 'Reframed focus toward business and engineering outcomes without inventing statistics.',
+  addedScope: 'Emphasized technical scope and architecture based on your actual source text.',
+  trimmedLength: 'Concise phrasing fits recruiter scannability thresholds.'
 };

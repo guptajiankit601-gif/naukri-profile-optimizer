@@ -1,6 +1,15 @@
 export type ComponentKey =
   | 'headlineClarity'
   | 'summaryQuality'
+  | 'skillKeywordRelevance'
+  | 'experienceRelevance'
+  | 'achievementImpact'
+  | 'projectsPortfolio'
+  | 'educationCertifications'
+  | 'atsReadability'
+  | 'targetRoleAlignment'
+  | 'completenessConsistency'
+  // Backward compatibility keys
   | 'bulletQuality'
   | 'skillStructure'
   | 'educationDetail'
@@ -16,20 +25,36 @@ export interface ComponentResult {
   weight: number;
   score: number;
   max: number;
+  headroom?: number;
   status?: 'good' | 'warn' | 'bad';
   issue: string;
   fix: string;
   example: string;
   evidence?: string[];
+  isApplicable?: boolean;
 }
 
 export type ScoringComponent = ComponentResult;
+
+export interface TopFixItem {
+  title: string;
+  points: number;
+  actionTab: string;
+  ruleId?: string;
+  componentKey?: string;
+  description?: string;
+  projectedScore?: number;
+}
 
 export interface ScoreReport {
   overallScore: number;
   verdict: 'Weak' | 'Okay' | 'Strong' | 'Needs Work';
   components: ComponentResult[];
-  topFixes: { title: string; points: number; actionTab: string }[];
+  topFixes: TopFixItem[];
+  isFresher?: boolean;
+  totalMax?: number;
+  headroomTotal?: number;
+  normalizationNote?: string;
 }
 
 export interface ScoreHistoryPoint {

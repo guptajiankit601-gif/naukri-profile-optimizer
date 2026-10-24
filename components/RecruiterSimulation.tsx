@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ParsedProfile, RecruiterPersona } from '@/types';
 import { simulateRecruiterScan } from '@/services/recruiter-sim';
-import { Clock, Eye, AlertCircle, CheckCircle, Flame, Building2, Briefcase, UserCheck, ArrowRight } from 'lucide-react';
+import { Clock, Eye, AlertCircle, CheckCircle, Flame, Building2, Briefcase, UserCheck, ArrowRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RecruiterSimulationProps {
@@ -17,9 +17,9 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
   const sim = simulateRecruiterScan(profile, selectedPersona);
 
   const personas: { id: RecruiterPersona; label: string; icon: React.ReactNode; tag: string }[] = [
-    { id: 'Startup Founder', label: 'Startup Founder', icon: <Flame className="w-4 h-4 text-[#FF7582]" />, tag: 'Speed & Scale' },
+    { id: 'Startup Founder', label: 'Startup Founder', icon: <Flame className="w-4 h-4 text-[#FF7582]" />, tag: 'Speed & Deliverables' },
     { id: 'Enterprise TA', label: 'Enterprise TA', icon: <Building2 className="w-4 h-4 text-sky-400" />, tag: 'Certifications & Cloud' },
-    { id: 'Consultancy Recruiter', label: 'Consultancy Recruiter', icon: <Briefcase className="w-4 h-4 text-purple-400" />, tag: 'Keyword Ratecard' },
+    { id: 'Consultancy Recruiter', label: 'Consultancy Recruiter', icon: <Briefcase className="w-4 h-4 text-purple-400" />, tag: 'Skill Alignment' },
     { id: 'HR Screen', label: 'HR Screen', icon: <UserCheck className="w-4 h-4 text-emerald-400" />, tag: 'Hygiene & Eligibility' }
   ];
 
@@ -33,16 +33,24 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Eye className="w-5 h-5 text-[#FF7582]" />
-              <h3 className="text-lg font-bold text-white">6-Second Recruiter Human Eye Simulation</h3>
+              <h3 className="text-lg font-bold text-white">Illustrative 6-Second Recruiter Glance Simulation</h3>
             </div>
             <p className="text-xs text-slate-300">
-              Recruiters don&apos;t read resumes — they scan them in 6 seconds. Test your profile through 4 distinct recruiter lenses:
+              Heuristic simulation modeling how human recruiters rapidly triage resumes across 4 distinct hiring contexts:
             </p>
           </div>
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/60 border border-white/10 shrink-0">
-            <Clock className="w-4 h-4 text-[#FF7582] animate-pulse" />
+            <Clock className="w-4 h-4 text-[#FF7582]" />
             <span className="text-xs font-semibold text-slate-200">Scan Window: 6 Seconds</span>
           </div>
+        </div>
+
+        {/* Methodology & Limitations Disclaimer */}
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-950/40 border border-white/5 text-[11px] text-slate-400">
+          <Info className="w-4 h-4 text-[#FF7582] shrink-0 mt-0.5" />
+          <span>
+            <strong>Simulation Note:</strong> This is a rule-based simulation of recruiter scanning behavior, not physical eye-tracking hardware or a certified hiring outcome. Actual recruiters evaluate candidates individually based on role context and company hiring standards.
+          </span>
         </div>
 
         {/* Persona Selectors */}
@@ -157,9 +165,9 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
                   <AlertCircle className="w-5 h-5 text-[#FF7582] shrink-0" />
                 )}
                 <span className="text-base font-black text-white">
-                  6-Second Verdict:{' '}
+                  6-Second Scan Impression:{' '}
                   <span className={sim.verdict === 'INTEREST' ? 'text-emerald-400' : sim.verdict === 'MAYBE' ? 'text-amber-400' : 'text-[#FF7582]'}>
-                    {sim.verdict}
+                    {sim.verdict === 'INTEREST' ? 'High Consideration' : sim.verdict === 'MAYBE' ? 'Needs Review' : 'Initial Pass-Over Risk'}
                   </span>
                 </span>
               </div>
@@ -167,7 +175,7 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
             </div>
 
             <div className="text-left sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
-              <div className="text-[10px] uppercase font-bold text-[#8FA3B8]">Persona Fit Score</div>
+              <div className="text-[10px] uppercase font-bold text-[#8FA3B8]">Heuristic Alignment</div>
               <div className={`text-3xl font-black font-mono ${sim.visibilityScore >= 70 ? 'text-emerald-400' : sim.visibilityScore >= 50 ? 'text-amber-400' : 'text-[#FF7582]'}`}>
                 {sim.visibilityScore}/100
               </div>
@@ -177,7 +185,7 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
           {/* Timeline Steps (0-2s, 2-4s, 4-6s) */}
           <div className="bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-xl space-y-4">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8]">
-              Second-by-Second Eye Movement Timeline
+              Second-by-Second Scan Sequence
             </h4>
             <div className="space-y-3">
               {sim.timeline.map((step, idx) => (
@@ -203,8 +211,8 @@ export const RecruiterSimulation: React.FC<RecruiterSimulationProps> = ({ profil
           {/* Action Callout */}
           <div className="p-5 rounded-2xl bg-[#14273A] border border-[#FF7582]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-0.5">
-              <p className="text-xs font-bold text-white">Flip this SKIP into an INTEREST</p>
-              <p className="text-[11px] text-slate-300">Upgrading your top 3 bullets and injecting metrics yields +24 points immediately.</p>
+              <p className="text-xs font-bold text-white">Elevate Your Recruiter First Impression</p>
+              <p className="text-[11px] text-slate-300">Convert passive bullet points into verifiable action deliverables.</p>
             </div>
             <Button
               onClick={() => onNavigateToTab('rewriter')}

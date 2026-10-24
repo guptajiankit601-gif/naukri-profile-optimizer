@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts && tsx tests/ai-verification.ts"
+    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts && tsx tests/ai-verification.ts && tsx tests/scoring-integrity.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
