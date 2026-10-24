@@ -1,98 +1,72 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, ShieldCheck, Award, Bell, Menu, X, ChevronDown, Check } from 'lucide-react';
-import { SEEDED_PROFILES } from '@/data/seeded-profiles';
+import { Award, ChevronDown, Check, Briefcase, MapPin, Sparkles } from 'lucide-react';
+import { SEEDED_PROFILES } from '@/lib/data/seeded-profiles';
+import { Button } from '@/components/ui/button';
 
 interface GlassMenuBarProps {
   currentScore?: number;
-  activeTab?: string;
-  onNavigateTab?: (tab: string) => void;
+  targetRoleBadge?: string;
   onSelectSeededProfile: (key: string) => void;
   onReset: () => void;
   onOpenShareCard?: () => void;
 }
 
 export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
-  currentScore,
-  activeTab = 'recruiter-sim',
-  onNavigateTab,
+  currentScore = 52,
+  targetRoleBadge = 'Backend Engineer · 3-5 yrs · Bengaluru',
   onSelectSeededProfile,
   onReset,
   onOpenShareCard
 }) => {
   const [isDemoDropdownOpen, setIsDemoDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const navLinks = [
-    { id: 'recruiter-sim', label: 'Recruiter View' },
-    { id: 'keywords', label: 'Keywords' },
-    { id: 'rewriter', label: 'Rewriter' },
-    { id: 'job-fit', label: 'Job Fit' },
-    { id: 'benchmarks', label: 'Benchmark' },
-    { id: 'action-plan', label: 'Action Plan' }
-  ];
 
   return (
-    <>
-      <header className="glass-menubar">
-        {/* Left: Brand Logo & Wordmark */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={onReset}>
-          {/* Logo Mark: 32px rounded square with grad-sunset */}
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#355C7D] via-[#725A7A] to-[#FF7582] flex items-center justify-center shadow-md shadow-[#FF7582]/20 flex-shrink-0">
+    <header className="h-16 fixed top-0 left-0 right-0 z-50 bg-[#0F2233]/90 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 shadow-lg shadow-black/20">
+      <div className="max-w-7xl mx-auto h-full flex items-center justify-between gap-4">
+        {/* Left: Brand Logo */}
+        <div
+          className="flex items-center gap-3 cursor-pointer shrink-0"
+          onClick={onReset}
+          title="Reset to home"
+        >
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#355C7D] via-[#725A7A] to-[#FF7582] flex items-center justify-center shadow-md shadow-[#FF7582]/20 shrink-0">
             <span className="text-white font-extrabold text-sm tracking-tighter">N</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#F2F5F8]">
-                Naukri
-              </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[#FF7582]/15 text-[#FF7582] border border-[#FF7582]/30">
-                Optimizer
-              </span>
-            </div>
-            <p className="text-[10px] text-[#6E8397] tracking-wider uppercase hidden sm:block">
-              Recruiter-Perspective Analysis
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-base tracking-tight text-[#F2F5F8]">
+              Naukri
+            </span>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 shadow-sm">
+              Optimizer
+            </span>
           </div>
         </div>
 
-        {/* Center: Nav Items with Animated Sunset Underline (Desktop ≥1024px) */}
-        {currentScore !== undefined && onNavigateTab && (
-          <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigateTab(item.id)}
-                  data-active={isActive ? 'true' : 'false'}
-                  className="nav-item"
-                >
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        )}
+        {/* Center: Target Role Badge */}
+        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#14273A] border border-white/10 text-xs font-semibold text-slate-200 shadow-inner">
+          <Briefcase className="w-3.5 h-3.5 text-[#FF7582] shrink-0" />
+          <span className="tracking-wide text-slate-200">{targetRoleBadge}</span>
+        </div>
 
-        {/* Right Cluster: Demo Switcher + Score Badge + Actions */}
-        <div className="flex items-center gap-2.5">
-          {/* Pre-loaded Persona Selector */}
+        {/* Right: Persona Switcher + Score Pill + Share Button */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          {/* Persona Switcher Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsDemoDropdownOpen(!isDemoDropdownOpen)}
-              className="btn-glass text-xs py-1.5 px-2.5 flex items-center gap-1.5 text-slate-300 hover:text-white"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#14273A] border border-white/10 hover:border-white/20 text-xs font-semibold flex items-center gap-1.5 text-slate-200 transition-colors cursor-pointer"
             >
-              <span className="text-[11px] text-[#A8B8C8]">Persona:</span>
-              <span className="font-semibold text-white">Switch Demo</span>
+              <span className="text-[10px] text-[#8FA3B8] uppercase font-bold hidden sm:inline">Persona:</span>
+              <span className="text-white font-bold">Switch</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {isDemoDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-[#14293C] border border-[#24405A] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="text-[10px] uppercase font-bold text-[#6E8397] px-2 py-1">
-                  1-Click Test Drive Profiles:
+              <div className="absolute right-0 mt-2 w-64 bg-[#14273A] border border-white/10 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="text-[10px] uppercase font-bold text-[#8FA3B8] px-2 py-1 tracking-wider">
+                  Test Drive Personas:
                 </div>
                 {Object.entries(SEEDED_PROFILES).map(([key, p]) => (
                   <button
@@ -101,13 +75,11 @@ export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
                       onSelectSeededProfile(key);
                       setIsDemoDropdownOpen(false);
                     }}
-                    className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-[#1A3145] transition-colors flex items-center justify-between text-xs cursor-pointer group"
+                    className="w-full text-left p-2 rounded-xl hover:bg-white/5 transition-colors flex items-center justify-between text-xs cursor-pointer group"
                   >
                     <div>
-                      <div className="font-bold text-white group-hover:text-[#FF7582] transition-colors">
-                        {p.name}
-                      </div>
-                      <div className="text-[10px] text-[#A8B8C8]">{p.targetRole} · {p.experienceBand} yrs</div>
+                      <div className="font-bold text-white group-hover:text-[#FF7582] transition-colors">{p.name}</div>
+                      <div className="text-[10px] text-slate-400">{p.targetRole} · {p.experienceBand}</div>
                     </div>
                   </button>
                 ))}
@@ -115,91 +87,28 @@ export const GlassMenuBar: React.FC<GlassMenuBarProps> = ({
             )}
           </div>
 
-          {/* Score Badge: Glass pill with grad-text clip */}
-          {currentScore !== undefined && (
-            <div className="glass-panel px-3 py-1 flex items-center gap-2">
-              <span className="text-[11px] font-bold text-[#A8B8C8]">Score:</span>
-              <span className={`text-sm font-black tabular-nums ${
-                currentScore >= 71 ? 'text-[#3FBF8F]' : currentScore >= 41 ? 'text-[#F5A524]' : 'text-[#FF7582]'
-              }`}>
-                {currentScore}/100
-              </span>
-            </div>
-          )}
-
-          {/* Primary CTA: Share Card Button using coral-600 with white text */}
-          {onOpenShareCard && currentScore !== undefined && (
-            <button
-              onClick={onOpenShareCard}
-              className="btn-primary text-xs py-1.5 px-3 hidden sm:inline-flex"
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>Share Card</span>
-            </button>
-          )}
-
-          {/* Mobile Hamburger (<1024px) */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg bg-[#14293C] border border-[#24405A] text-slate-300 hover:text-white"
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Drawer */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden flex justify-end">
-          <div className="w-72 bg-[#0B1B2B] h-full p-6 border-l border-[#24405A] shadow-2xl flex flex-col justify-between overflow-y-auto">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#24405A]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#FF7582]">Navigation Menu</span>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400 hover:text-white">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-1">
-                {navLinks.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      onNavigateTab?.(item.id);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between ${
-                      activeTab === item.id ? 'bg-[#FF7582]/15 text-[#FF7582] border border-[#FF7582]/30' : 'text-slate-300 hover:bg-[#14293C]'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    {activeTab === item.id && <Check className="w-3.5 h-3.5 text-[#FF7582]" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#24405A] space-y-3">
-              <div className="text-[11px] text-[#A8B8C8] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Local & Private · Zero Cloud Storage</span>
-              </div>
-              {onOpenShareCard && (
-                <button
-                  onClick={() => {
-                    onOpenShareCard();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="btn-primary w-full text-xs py-2.5"
-                >
-                  <Award className="w-4 h-4" />
-                  <span>Download Score Card</span>
-                </button>
-              )}
-            </div>
+          {/* Score Pill ("52/100") */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#14273A] border border-[#FF7582]/30 shadow-sm">
+            <span className="text-[10px] font-bold text-[#8FA3B8] uppercase tracking-wider hidden sm:inline">Score</span>
+            <span className="text-xs font-black text-[#FF7582] font-mono">
+              {currentScore}/100
+            </span>
           </div>
+
+          {/* Primary "Share Recruiter Card" Button */}
+          {onOpenShareCard && (
+            <Button
+              size="sm"
+              onClick={onOpenShareCard}
+              className="h-8 px-3.5 text-xs font-bold bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 hover:brightness-110 shadow-md shadow-[#FF7582]/20 shrink-0"
+            >
+              <Award className="w-3.5 h-3.5 mr-1.5" />
+              <span className="hidden sm:inline">Share Recruiter Card</span>
+              <span className="sm:hidden">Share</span>
+            </Button>
+          )}
         </div>
-      )}
-    </>
+      </div>
+    </header>
   );
 };

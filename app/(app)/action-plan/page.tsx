@@ -1,5 +1,5 @@
 import HomePage from '@/app/page';
 
-export default function AppRoutePage() {
-  return <HomePage />;
+export default function ActionPlanPage() {
+  return <HomePage initialStep="dashboard" initialTab="action-plan" />;
 }

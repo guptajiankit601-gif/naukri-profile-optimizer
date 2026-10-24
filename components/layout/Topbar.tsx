@@ -5,29 +5,28 @@ import { GlassMenuBar } from './GlassMenuBar';
 
 export interface TopbarProps {
   currentScore?: number;
-  activeTab?: string;
-  onNavigateTab?: (tab: string) => void;
+  targetRoleBadge?: string;
   onSelectSeededProfile?: (key: string) => void;
   onReset?: () => void;
   onOpenShareCard?: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
-  currentScore = 68,
-  activeTab = 'recruiter-sim',
-  onNavigateTab = () => {},
+  currentScore = 52,
+  targetRoleBadge = 'Backend Engineer · 3-5 yrs · Bengaluru',
   onSelectSeededProfile = () => {},
   onReset = () => {},
-  onOpenShareCard = () => {},
+  onOpenShareCard = () => {}
 }) => {
   return (
     <GlassMenuBar
       currentScore={currentScore}
-      activeTab={activeTab}
-      onNavigateTab={onNavigateTab}
+      targetRoleBadge={targetRoleBadge}
       onSelectSeededProfile={onSelectSeededProfile}
       onReset={onReset}
       onOpenShareCard={onOpenShareCard}
     />
   );
 };
+
+export const Navbar = Topbar;

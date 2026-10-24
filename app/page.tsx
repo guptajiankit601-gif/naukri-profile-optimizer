@@ -20,11 +20,19 @@ import { SampleCard } from '@/components/marketing/SampleCard';
 import { Faq } from '@/components/marketing/Faq';
 import { Footer } from '@/components/marketing/Footer';
 
-type AppStep = 'upload' | 'target-role' | 'review' | 'analysis' | 'dashboard';
+export type AppStep = 'upload' | 'target-role' | 'review' | 'analysis' | 'dashboard';
 
-export default function HomePage() {
-  const [currentStep, setCurrentStep] = useState<AppStep>('upload');
-  const [activeDashboardTab, setActiveDashboardTab] = useState<string>('recruiter-sim');
+export interface HomePageProps {
+  initialStep?: AppStep;
+  initialTab?: string;
+}
+
+export default function HomePage({
+  initialStep = 'upload',
+  initialTab = 'recruiter-sim'
+}: HomePageProps) {
+  const [currentStep, setCurrentStep] = useState<AppStep>(initialStep);
+  const [activeDashboardTab, setActiveDashboardTab] = useState<string>(initialTab);
   const [profile, setProfile] = useState<ParsedProfile>(SEEDED_PROFILES.arjun);
   const [scoreReport, setScoreReport] = useState<ScoreReport>(() => calculateScore(SEEDED_PROFILES.arjun));
   const [scoreHistory, setScoreHistory] = useState<ScoreHistoryPoint[]>([
@@ -133,7 +141,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F2233] text-[#F2F5F8] flex flex-col font-sans selection:bg-[#FF7582] selection:text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B1521] to-[#0F2233] text-[#F2F5F8] flex flex-col font-sans selection:bg-[#FF7582] selection:text-slate-900">
       <AppShell
         currentScore={currentStep === 'dashboard' ? scoreReport.overallScore : undefined}
         scoreReport={currentStep === 'dashboard' ? scoreReport : undefined}
@@ -202,7 +210,7 @@ export default function HomePage() {
           />
         )}
 
-        {/* Share Card Modal (F14) */}
+        {/* Share Card Modal */}
         <ShareCardModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}

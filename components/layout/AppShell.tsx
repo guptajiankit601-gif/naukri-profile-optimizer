@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { GlassMenuBar } from './GlassMenuBar';
 import { SideNav } from './SideNav';
-import { RightRail } from './RightRail';
 import { MobileNav } from './MobileNav';
 import { PrivacyNoticeModal } from '@/components/PrivacyNoticeModal';
 import { ScoreReport, ActionPlanItem } from '@/types';
@@ -31,50 +30,36 @@ export const AppShell: React.FC<AppShellProps> = ({
   onOpenShareCard,
   children
 }) => {
-  const [sideNavCollapsed, setSideNavCollapsed] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0F2233] text-[#F2F5F8] flex flex-col font-sans">
-      {/* 1. Liquid Glass Menubar */}
+    <div className="min-h-screen bg-gradient-to-b from-[#0B1521] to-[#0F2233] text-[#F2F5F8] flex flex-col font-sans">
+      {/* 1. Liquid Glass Topbar */}
       <GlassMenuBar
         currentScore={currentScore}
-        activeTab={activeTab}
-        onNavigateTab={onNavigateTab}
+        targetRoleBadge="Backend Engineer · 3-5 yrs · Bengaluru"
         onSelectSeededProfile={onSelectSeededProfile}
         onReset={onReset}
         onOpenShareCard={onOpenShareCard}
       />
 
-      {/* 2. 3-Column Work Area */}
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
-        {/* Left: SideNav */}
+      {/* 2. Fluid Work Area (Sidebar + Spacious Main Content) */}
+      <div className="flex-1 flex w-full">
+        {/* Left: Primary SideNav */}
         {currentScore !== undefined && (
           <SideNav
             activeTab={activeTab}
             onNavigateTab={onNavigateTab}
-            collapsed={sideNavCollapsed}
-            onToggleCollapse={() => setSideNavCollapsed(!sideNavCollapsed)}
           />
         )}
 
-        {/* Center: Main Content */}
-        <main className={`flex-1 min-w-0 w-full px-4 py-6 md:px-6 pb-20 md:pb-8 ${currentScore === undefined ? 'max-w-4xl mx-auto' : ''}`}>
+        {/* Fluid Workspace with No Pushing Right Rail */}
+        <main className="flex-1 min-w-0 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12">
           {children}
         </main>
-
-        {/* Right: RightRail */}
-        {currentScore !== undefined && scoreReport && actionPlan && onOpenShareCard && (
-          <RightRail
-            scoreReport={scoreReport}
-            actionPlan={actionPlan}
-            onNavigateTab={onNavigateTab}
-            onOpenShareCard={onOpenShareCard}
-          />
-        )}
       </div>
 
-      {/* 3. Mobile Bottom Nav (<768px) */}
+      {/* 3. Mobile Nav (<1024px) */}
       {currentScore !== undefined && (
         <MobileNav
           activeTab={activeTab}
@@ -83,11 +68,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       )}
 
       {/* 4. Footer */}
-      <footer className="border-t border-[var(--border)] py-6 px-4 text-center text-xs text-[#6E8397] no-print">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Naukri Profile Optimizer · Next.js 14 App Router Monolith · Sunset Palette</span>
+      <footer className="border-t border-white/10 py-6 px-4 text-center text-xs text-slate-400 no-print">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span>Naukri Profile Optimizer · Recruiter-Perspective Analysis · Sunset Palette</span>
           <div className="flex items-center gap-3">
-            <span>100% Client-Side · Zero External Storage</span>
+            <span>100% Client-Side · Zero Disk PII</span>
             <span>·</span>
             <button
               onClick={() => setIsPrivacyModalOpen(true)}
@@ -96,12 +81,12 @@ export const AppShell: React.FC<AppShellProps> = ({
               DPDP Privacy Notice
             </button>
             <span>·</span>
-            <span>v1.0</span>
+            <span>v2.0.0</span>
           </div>
         </div>
       </footer>
 
-      {/* DPDP Privacy Notice Modal */}
+      {/* Privacy Notice Modal */}
       <PrivacyNoticeModal
         isOpen={isPrivacyModalOpen}
         onClose={() => setIsPrivacyModalOpen(false)}
