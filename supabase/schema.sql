@@ -1,8 +1,9 @@
 -- Supabase Postgres Schema for Naukri Profile Optimizer
+-- Compliant with India DPDP Act 2023 & Row Level Security (RLS)
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Profiles table
+-- 1. Profiles Table
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID,
@@ -20,24 +21,43 @@ CREATE TABLE IF NOT EXISTS profiles (
   keywords JSONB,
   action_plan JSONB,
   is_anonymous BOOLEAN DEFAULT true,
+  share_token TEXT UNIQUE,
+  is_published BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Rewrites table
+-- Enable RLS on profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Allow public read access to published score cards via share_token
+CREATE POLICY "Public profiles can be viewed via share_token" ON profiles
+  FOR SELECT USING (is_published = true AND share_token IS NOT NULL);
+
+-- Allow users to read and update their own profiles or anonymous guest access
+CREATE POLICY "Users can manage their own profiles" ON profiles
+  FOR ALL USING (auth.uid() = user_id OR (user_id IS NULL AND is_anonymous = true));
+
+-- 2. Rewrites Table
 CREATE TABLE IF NOT EXISTS rewrites (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   section TEXT,
   original TEXT,
   suggested TEXT,
-  variant TEXT,
+  variant TEXT, -- SAFE | METRIC | IMPACT
   reason TEXT,
   status TEXT DEFAULT 'pending', -- pending | accepted | rejected
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Job fits table
+ALTER TABLE rewrites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can access their own rewrites" ON rewrites
+  FOR ALL USING (
+    profile_id IN (SELECT id FROM profiles WHERE auth.uid() = user_id OR user_id IS NULL)
+  );
+
+-- 3. Job Fits Table
 CREATE TABLE IF NOT EXISTS job_fits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -49,7 +69,13 @@ CREATE TABLE IF NOT EXISTS job_fits (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Score history table
+ALTER TABLE job_fits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can access their own job fits" ON job_fits
+  FOR ALL USING (
+    profile_id IN (SELECT id FROM profiles WHERE auth.uid() = user_id OR user_id IS NULL)
+  );
+
+-- 4. Score History Table
 CREATE TABLE IF NOT EXISTS score_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -58,7 +84,13 @@ CREATE TABLE IF NOT EXISTS score_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Applications table
+ALTER TABLE score_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view score history" ON score_history
+  FOR SELECT USING (
+    profile_id IN (SELECT id FROM profiles WHERE auth.uid() = user_id OR user_id IS NULL)
+  );
+
+-- 5. Applications Table
 CREATE TABLE IF NOT EXISTS applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -70,7 +102,13 @@ CREATE TABLE IF NOT EXISTS applications (
   applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User Consents table (DPDP Act 2023 & Section 8.2)
+ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their applications" ON applications
+  FOR ALL USING (
+    profile_id IN (SELECT id FROM profiles WHERE auth.uid() = user_id OR user_id IS NULL)
+  );
+
+-- 6. User Consents Table (DPDP Act 2023 Compliance)
 CREATE TABLE IF NOT EXISTS user_consents (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID,
@@ -78,10 +116,21 @@ CREATE TABLE IF NOT EXISTS user_consents (
   granted BOOLEAN NOT NULL,
   granted_at TIMESTAMP WITH TIME ZONE,
   revoked_at TIMESTAMP WITH TIME ZONE,
-  version TEXT NOT NULL             -- consent text version, for legal audit
+  version TEXT NOT NULL             -- consent text version
 );
 
--- 24-hour Auto-Purge Cron function for Anonymous Data Minimization (DPDP compliance)
+ALTER TABLE user_consents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their consents" ON user_consents
+  FOR ALL USING (auth.uid() = user_id OR user_id IS NULL);
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_share_token ON profiles(share_token);
+CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON profiles(created_at);
+CREATE INDEX IF NOT EXISTS idx_rewrites_profile_id ON rewrites(profile_id);
+CREATE INDEX IF NOT EXISTS idx_job_fits_profile_id ON job_fits(profile_id);
+
+-- 7. 24-Hour Auto-Purge Function for Anonymous Data Minimization (DPDP compliance)
 CREATE OR REPLACE FUNCTION purge_old_anonymous_profiles()
 RETURNS void AS $$
 BEGIN
