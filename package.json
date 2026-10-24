@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts"
+    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts && tsx tests/ai-verification.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -26,6 +26,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"
   },
