@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sunset-navy: #0F2233;
+  --color-sunset-plum: #725A7A;
+  --color-sunset-rose: #C56C86;
+  --color-sunset-coral: #FF7582;
+  --color-sunset-dark: #0A1722;
+  --color-sunset-surface: #13273A;
+  --color-sunset-card: #18314A;
+  --color-sunset-border: #234566;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    background-color: #0A1722;
+    color: #F1F5F9;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0F2233;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A4968;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #725A7A;
+}
+
+/* Print styles for ATS resume export */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #111827 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
