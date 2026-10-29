@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts && tsx tests/ai-verification.ts && tsx tests/scoring-integrity.test.ts"
+    "test": "tsx tests/engine-verification.ts && tsx tests/memory-verification.ts && tsx tests/skill-verification.ts && tsx tests/security-verification.ts && tsx tests/ai-verification.ts && tsx tests/scoring-integrity.test.ts && tsx tests/bullet-intent-integrity.test.ts && tsx tests/upload-parser-verification.test.ts && tsx tests/theme-verification.test.ts && tsx tests/action-buttons-verification.test.ts && tsx tests/complete-profile-audit.test.ts && tsx tests/skill-autocomplete-consistency.test.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

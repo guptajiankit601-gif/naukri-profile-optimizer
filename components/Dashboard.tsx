@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ParsedProfile, ScoreReport, ScoreHistoryPoint, ActionPlanItem } from '@/types';
+import { useReport } from '@/lib/context/ReportContext';
 import { RecruiterSimulation } from './RecruiterSimulation';
 import { KeywordGapChecker } from './KeywordGapChecker';
 import { BulletRewriterView } from './BulletRewriterView';
@@ -12,16 +13,24 @@ import { PeerBenchmarkView } from './PeerBenchmarkView';
 import { ProgressTrackerView } from './ProgressTrackerView';
 import { ActionPlanView } from './ActionPlanView';
 import { ExportView } from './ExportView';
+import { CompleteProfileAuditView } from './audit/CompleteProfileAuditView';
 import { DemoProfileBanner } from './shared/DemoProfileBanner';
 import confetti from 'canvas-confetti';
 import { 
   Award,
+  ClipboardCheck,
   HelpCircle,
   X,
   ShieldCheck,
   ChevronRight,
   Sparkles,
-  Zap
+  Zap,
+  RotateCcw,
+  History,
+  TrendingUp,
+  MapPin,
+  Clock,
+  Layers
 } from 'lucide-react';
 import { ScoreRing } from '@/components/dashboard/ScoreRing';
 
@@ -54,6 +63,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const [isComponentModalOpen, setIsComponentModalOpen] = useState(false);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+
+  // Consume version history and undo capability from ReportContext
+  const { versions, scoreDelta, canUndo, undoLastEdit, restoreVersion } = useReport();
 
   const handleProfileChangeWithCelebration = (updated: ParsedProfile, reason: string = 'Updated Profile') => {
     onUpdateProfile(updated, reason);
@@ -70,16 +83,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const topYield = scoreReport.topFixes.reduce((sum, f) => sum + f.points, 0);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4">
       {/* Illustrative Demo Profile Alert Banner (if in demo mode) */}
       <DemoProfileBanner />
 
-      {/* 1. TOP HERO ROW (VISIBILITY STANDING + CANDIDATE PROFILE + PRIORITY TASKS) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Col 1 (4 cols): Visibility Standing Gauge */}
-        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8]">
+      {/* 1. TOP HERO ROW (COMPACT SUMMARY — VISIBILITY + CANDIDATE INFO + PRIORITY FIXES) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Col 1 (4 cols): Profile Optimization Score Gauge */}
+        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8FA3B8]">
               Profile Optimization Score
             </span>
             <button
@@ -91,10 +104,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-5">
-            <ScoreRing score={score} size={110} strokeWidth={9} />
-            <div className="space-y-1">
-              <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+          <div className="flex items-center gap-4">
+            <ScoreRing score={score} size={90} strokeWidth={8} />
+            <div className="space-y-0.5 min-w-0">
+              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 scoreReport.verdict === 'Strong'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                   : scoreReport.verdict === 'Okay'
@@ -103,18 +116,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }`}>
                 {scoreReport.verdict} Readiness
               </span>
-              <p className="text-sm font-bold text-white leading-tight">
-                Recruiter Screening Heuristic
+              <p className="text-xs font-bold text-white leading-tight">
+                Recruiter Screening Assessment
               </p>
               <p className="text-xs text-slate-300">
-                Score headroom: <strong className="text-[#FF7582] font-mono font-bold">+{totalHeadroom} pts</strong>
+                Potential score gain: <strong className="text-blue-400 font-mono font-bold">+{totalHeadroom} pts</strong>
               </p>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
-            <span>Evaluation Model:</span>
-            <span className="font-semibold text-white">
+          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-300">
+            <span className="text-[11px]">Evaluation Model:</span>
+            <span className="font-semibold text-white text-[11px]">
               {scoreReport.isFresher ? (
                 <span className="text-emerald-400">Fresher Model (Projects Reweighted)</span>
               ) : (
@@ -124,48 +137,93 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* Col 2 (4 cols): Candidate Overview */}
-        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8]">
+        {/* Col 2 (4 cols): Candidate Overview & Version History Controls */}
+        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8FA3B8]">
               Candidate Target
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/5 font-semibold">
-              {profile.experienceBand} Band
-            </span>
+            <div className="flex items-center gap-1.5">
+              {scoreDelta !== 0 && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+                  scoreDelta > 0 
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                }`}>
+                  {scoreDelta > 0 ? `+${scoreDelta}` : scoreDelta} pts vs start
+                </span>
+              )}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/5 font-semibold">
+                {profile.experienceBand}
+              </span>
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-white tracking-tight">
-              {profile.name}
-            </h2>
-            <p className="text-xs font-semibold text-[#FF7582] leading-snug line-clamp-2">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+                {profile.name}
+              </h2>
+              {canUndo && (
+                <button
+                  onClick={undoLastEdit}
+                  title="Undo last accepted edit"
+                  className="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 hover:bg-amber-500/30 transition-all cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Undo Edit</span>
+                </button>
+              )}
+            </div>
+            <p className="text-xs font-semibold text-[#FF7582] leading-snug line-clamp-1">
               {profile.headline}
             </p>
-            <p className="text-xs text-slate-400">
-              {profile.targetRole} · {profile.location}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-300">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-[#FF7582]" />
+                <span>{profile.targetCities.slice(0, 2).join(', ') || profile.location}</span>
+              </span>
+              <span>•</span>
+              <span className="font-mono text-slate-300">{profile.skills.length} skills listed</span>
+              {profile.expectedSalaryLakhs && (
+                <>
+                  <span>•</span>
+                  <span className="text-slate-300">₹{profile.expectedSalaryLakhs} LPA</span>
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
-            <button
-              onClick={onOpenShareCard}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 font-bold text-xs shadow-md hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>Share Score Card</span>
-            </button>
-            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-950/40 border border-white/5 text-[10px] text-slate-400">
+          <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onOpenShareCard}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FF7582] to-[#C56C86] text-slate-950 font-bold text-xs shadow-md hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Share Card</span>
+              </button>
+              {versions.length > 0 && (
+                <button
+                  onClick={() => setIsVersionModalOpen(true)}
+                  className="px-2.5 py-1.5 rounded-xl bg-[#0F2233] hover:bg-[#18314A] border border-[#234566] text-slate-300 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <History className="w-3.5 h-3.5 text-[#FF7582]" />
+                  <span>Revisions ({versions.length})</span>
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-950/40 border border-white/5 text-[10px] text-slate-400">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Client-Side Processed</span>
+              <span>In-Browser</span>
             </div>
           </div>
         </div>
 
-        {/* Col 3 (4 cols): Priority Tasks (Top 3 ROI Fixes) */}
-        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-xl flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#8FA3B8] flex items-center gap-1.5">
+        {/* Col 3 (4 cols): Priority Fixes (Simulated Yield Capped at Headroom) */}
+        <div className="lg:col-span-4 bg-[#14273A] rounded-2xl border border-white/10 p-4 sm:p-5 shadow-xl flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8FA3B8] flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-[#FF7582]" />
               Priority Fixes (Simulated)
             </span>
@@ -174,22 +232,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {scoreReport.topFixes.slice(0, 3).map((fix, idx) => (
               <div
                 key={idx}
                 onClick={() => setActiveTab(fix.actionTab)}
-                className="p-2.5 rounded-xl bg-slate-950/50 border border-white/5 hover:border-[#FF7582]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                className="p-2 rounded-xl bg-slate-950/50 border border-white/5 hover:border-[#FF7582]/40 transition-all cursor-pointer flex items-center justify-between gap-2.5 group"
               >
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
                     {fix.title}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate">
-                    {fix.description || 'Simulated yield capped at component headroom'}
+                    {fix.description || 'Estimated score gain for this improvement'}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <span className="text-xs font-bold text-emerald-400 font-mono">
                     +{fix.points}
                   </span>
@@ -199,7 +257,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             ))}
           </div>
 
-          <div className="pt-2 text-right">
+          <div className="pt-1 text-right">
             <button
               onClick={() => setActiveTab('action-plan')}
               className="text-xs text-[#FF7582] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
@@ -212,7 +270,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* 2. ACTIVE WORKSPACE VIEW (Selected via Left Sidebar) */}
-      <div className="bg-[#14273A] rounded-2xl border border-white/10 p-6 shadow-2xl">
+      <div className="bg-[#14273A] rounded-2xl border border-white/10 p-5 sm:p-6 shadow-2xl">
+        {activeTab === 'audit' && (
+          <CompleteProfileAuditView
+            profile={profile}
+            scoreReport={scoreReport}
+            onUpdateProfile={(updated, reason) => handleProfileChangeWithCelebration(updated, reason || 'Updated Profile Audit Item')}
+            onNavigateToTab={(tabId) => setActiveTab(tabId)}
+          />
+        )}
+
         {activeTab === 'recruiter-sim' && (
           <RecruiterSimulation
             profile={profile}
@@ -326,6 +393,65 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="px-4 py-1.5 rounded-lg bg-white/10 text-white font-semibold hover:bg-white/15 cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version History & Reversible Revisions Modal */}
+      {isVersionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#14273A] border border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative my-8">
+            <button
+              onClick={() => setIsVersionModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-xl bg-slate-950/50 hover:bg-slate-950 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+              <History className="w-5 h-5 text-[#FF7582]" />
+              <span>Resume Version History & Reversible Snapshots</span>
+            </h3>
+            <p className="text-xs text-slate-300 mb-4">
+              All profile edits are recorded as independent snapshots. You can inspect changes and restore any previous version at any time.
+            </p>
+
+            <div className="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+              {versions.map((ver, idx) => (
+                <div key={ver.id} className="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">{ver.label}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 font-mono">
+                        {idx === 0 ? 'Original Baseline' : `Revision #${idx + 1}`}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">
+                      Target: {ver.role} · Score: <strong className="text-[#FF7582] font-mono">{ver.score}/100</strong>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      restoreVersion(ver.id);
+                      setIsVersionModalOpen(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-[#0F2233] hover:bg-[#18314A] border border-[#234566] text-xs font-semibold text-white flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                  >
+                    <RotateCcw className="w-3 h-3 text-[#FF7582]" />
+                    <span>Restore</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsVersionModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg bg-white/10 text-white font-semibold hover:bg-white/15 cursor-pointer text-xs"
+              >
+                Done
               </button>
             </div>
           </div>

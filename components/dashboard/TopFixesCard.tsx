@@ -31,7 +31,7 @@ export const TopFixesCard: React.FC<TopFixesCardProps> = ({ fixes, onNavigateTab
         </div>
 
         <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(255,117,130,0.1)] text-[#FF7582] border border-[rgba(255,117,130,0.2)] font-semibold">
-          +{fixes.reduce((sum, f) => sum + f.points, 0)} Headroom
+          +{fixes.reduce((sum, f) => sum + f.points, 0)} Potential Gain
         </span>
       </div>
 

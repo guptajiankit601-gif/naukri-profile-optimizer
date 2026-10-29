@@ -1,5 +1,3 @@
-import HomePage from '@/app/page';
+import BulletRewriterPage from '../bullet-rewriter/page';
 
-export default function RewriterPage() {
-  return <HomePage initialStep="dashboard" initialTab="rewriter" />;
-}
+export default BulletRewriterPage;

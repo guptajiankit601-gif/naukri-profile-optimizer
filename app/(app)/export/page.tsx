@@ -1,5 +1,3 @@
-import HomePage from '@/app/page';
+import ResumeExportPage from '../resume-export/page';
 
-export default function ExportPage() {
-  return <HomePage initialStep="dashboard" initialTab="export" />;
-}
+export default ResumeExportPage;

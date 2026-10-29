@@ -24,7 +24,7 @@ export const MetricInput: React.FC<MetricInputProps> = ({
           <TrendingUp className="w-3.5 h-3.5 text-[#FF7582]" />
           Inject Real Verification Metric (%, ₹, TPS, scale):
         </label>
-        <span className="text-[10px] text-emerald-400 font-mono">Zero Hallucination Guaranteed</span>
+        <span className="text-[10px] text-emerald-400 font-mono">Strict Fact Preservation — No Invented Metrics</span>
       </div>
 
       <Input

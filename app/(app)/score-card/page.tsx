@@ -1,5 +1,3 @@
-import HomePage from '@/app/page';
+import HistoryPage from '../history/page';
 
-export default function AppRoutePage() {
-  return <HomePage />;
-}
+export default HistoryPage;

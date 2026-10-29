@@ -1,4 +1,4 @@
-import { ParsedProfile, JobDescriptionMatch } from '@/types';
+import { ParsedProfile, JobDescriptionMatch, MatchedSkillEvidence, MissingResumeSkill, LearningGapSkill } from '@/types';
 import { matchSkillsInText } from '@/data/skills-dict';
 import { ROLES } from '@/data/roles';
 
@@ -111,15 +111,91 @@ export function matchJobDescription(profile: ParsedProfile, jdText: string, comp
 
   const matchedSkills: string[] = [];
   const missingMustHaves: { skill: string; frequencyPercent: number }[] = [];
+  const matchedEvidence: MatchedSkillEvidence[] = [];
+  const missingFromResume: MissingResumeSkill[] = [];
+  const learningGaps: LearningGapSkill[] = [];
+
+  const rawResumeTextLower = (profile.rawText || '').toLowerCase();
+  const allBullets = profile.experiences.flatMap(e => e.bullets);
 
   for (const skill of jdSkills) {
-    if (userSkillsSet.has(skill.toLowerCase())) {
+    const skillLower = skill.toLowerCase();
+    const isInSkills = userSkillsSet.has(skillLower);
+    const isInRaw = rawResumeTextLower.includes(skillLower);
+
+    if (isInSkills || isInRaw) {
       matchedSkills.push(skill);
+
+      // Find specific evidence citation
+      let evidenceText = 'Listed in Skills section';
+      let foundIn = 'Skills Inventory';
+
+      const matchingExp = profile.experiences.find(e =>
+        e.bullets.some(b => b.toLowerCase().includes(skillLower)) ||
+        e.title.toLowerCase().includes(skillLower)
+      );
+
+      if (matchingExp) {
+        const bullet = matchingExp.bullets.find(b => b.toLowerCase().includes(skillLower));
+        evidenceText = bullet ? `"${bullet.slice(0, 110)}..."` : `Role: ${matchingExp.title} @ ${matchingExp.company}`;
+        foundIn = `Experience @ ${matchingExp.company}`;
+      } else {
+        const matchingProj = profile.projects.find(p =>
+          (p.technologies || []).some(t => t.toLowerCase().includes(skillLower)) ||
+          p.title.toLowerCase().includes(skillLower) ||
+          p.description.toLowerCase().includes(skillLower)
+        );
+        if (matchingProj) {
+          evidenceText = `Project: ${matchingProj.title}`;
+          foundIn = 'Projects Portfolio';
+        }
+      }
+
+      matchedEvidence.push({
+        skill,
+        evidence: evidenceText,
+        foundIn
+      });
     } else {
+      // Deterministic frequency based on occurrences in JD
+      const occurrences = (jdLower.match(new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g')) || []).length;
+      const frequencyPercent = Math.min(95, Math.max(60, 60 + occurrences * 10));
+
       missingMustHaves.push({
         skill,
-        frequencyPercent: Math.floor(65 + Math.random() * 30)
+        frequencyPercent
       });
+
+      // Distinguish between Missing from Resume (Tailoring Opportunity) vs Potential Learning Gap
+      // If user has related stack tools (e.g. has Java and missing Spring Boot, or has Docker and missing K8s)
+      const isRelatedToExistingStack = profile.skills.some(userSkill => {
+        const us = userSkill.toLowerCase();
+        return (
+          (us.includes('java') && (skillLower.includes('spring') || skillLower.includes('jvm') || skillLower.includes('maven'))) ||
+          (us.includes('python') && (skillLower.includes('django') || skillLower.includes('fastapi') || skillLower.includes('flask'))) ||
+          (us.includes('react') && (skillLower.includes('next') || skillLower.includes('typescript') || skillLower.includes('redux'))) ||
+          (us.includes('docker') && (skillLower.includes('kubernetes') || skillLower.includes('aws') || skillLower.includes('ci/cd'))) ||
+          (us.includes('sql') && (skillLower.includes('postgres') || skillLower.includes('mysql') || skillLower.includes('indexing')))
+        );
+      });
+
+      if (isRelatedToExistingStack) {
+        missingFromResume.push({
+          skill,
+          context: `Mentioned in JD requirements (${occurrences > 1 ? `${occurrences}x in text` : 'key requirement'}), but not explicitly found in your resume text.`,
+          recommendation: `If you have worked with ${skill}, document it under your relevant projects or skills to pass automated ATS filters.`
+        });
+      } else {
+        learningGaps.push({
+          skill,
+          reason: `Required core capability in the JD with no adjacent stack evidence in your profile.`,
+          difficulty: skillLower.match(/kubernetes|distributed|system design|microservices|architecture|kafka/i)
+            ? 'Core Prerequisite'
+            : skillLower.match(/redis|docker|git|aws|ci\/cd|tailwind/i)
+            ? 'Quick Add'
+            : 'Moderate'
+        });
+      }
     }
   }
 
@@ -158,7 +234,7 @@ export function matchJobDescription(profile: ParsedProfile, jdText: string, comp
     const minSal = parseInt(salaryMatch[1], 10);
     const maxSal = parseInt(salaryMatch[2], 10);
     if (userExpected >= minSal && userExpected <= maxSal + 4) salScore = 95;
-    else if (userExpected > maxSal + 4) salScore = 45; // Overpriced rejection risk
+    else if (userExpected > maxSal + 4) salScore = 45; // Overpriced compensation mismatch risk
     else salScore = 80;
   }
 
@@ -181,11 +257,11 @@ export function matchJobDescription(profile: ParsedProfile, jdText: string, comp
 
   let positioningAdvice = '';
   if (verdict === 'Apply Now') {
-    positioningAdvice = `Strong match. Emphasize your hands-on experience with ${matchedSkills.slice(0, 3).join(', ')} in your application message.`;
+    positioningAdvice = `Strong alignment with core requirements. Highlight your verified experience with ${matchedSkills.slice(0, 3).join(', ')} in your application headline.`;
   } else if (verdict === 'Apply With Tweaks') {
-    positioningAdvice = `Add ${missingMustHaves.slice(0, 2).map(m => m.skill).join(' and ')} to your skills and projects before submitting to cross the 70% threshold.`;
+    positioningAdvice = `Good baseline alignment. If you have practical experience with ${missingMustHaves.slice(0, 2).map(m => m.skill).join(' or ')}, incorporate those keywords before submitting.`;
   } else {
-    positioningAdvice = `Low compatibility on must-have tech stack. You risk burning an application or getting blacklisted for 6 months. Prioritize higher-fit roles.`;
+    positioningAdvice = `Lower alignment with must-have technologies. Review the learning gaps to determine whether upskilling is needed before prioritizing this application.`;
   }
 
   return {
@@ -203,8 +279,11 @@ export function matchJobDescription(profile: ParsedProfile, jdText: string, comp
     },
     matchedSkills,
     missingMustHaves,
+    matchedEvidence,
+    missingFromResume,
+    learningGaps,
     positioningAdvice,
-    screeningWindowNotice: 'Recruiters on Naukri process 80% of candidates within the first 72 hours of job posting. Apply early with exact keywords.'
+    screeningWindowNotice: 'Recruiter Screening Advisory: Aligning your primary resume keywords with key job requirements ensures automated screening filters accurately reflect your experience.'
   };
 }
 
@@ -222,70 +301,65 @@ export function predictRejectionReasons(profile: ParsedProfile, expectedSalary: 
   const roleConfig = ROLES.find(r => r.id === profile.targetRoleId) || ROLES[0];
   const allBullets = profile.experiences.flatMap(e => e.bullets);
 
-  // 1. Salary over/under-expectation
-  const medianSalary = roleConfig.typicalSalaryLakhs.median;
-  if (expectedSalary > medianSalary * 1.5) {
+  // 1. Salary over/under-expectation with ethical framing & benchmark defensibility
+  const medianSalary = roleConfig.typicalSalaryLakhs?.median;
+  if (!medianSalary || medianSalary <= 0) {
+    reasons.push({
+      id: 'rej-sal-nodata',
+      category: 'Market Benchmark Advisory',
+      reason: `Insufficient verifiable market compensation data for ${profile.targetRole}. Portal benchmark check skipped.`,
+      probabilityPercent: 20,
+      fix: 'Verify peer compensation data through verified industry surveys or employee network before locking portal CTC expectations.',
+      severity: 'low'
+    });
+  } else if (expectedSalary > medianSalary * 1.6) {
     reasons.push({
       id: 'rej-sal',
-      category: 'Compensation Mismatch',
-      reason: `Expected ₹${expectedSalary} LPA is 50%+ above standard recruiter search filter for ${roleConfig.name} (${profile.experienceBand} yrs).`,
-      probabilityPercent: 78,
-      fix: 'Recruiters filter out profiles asking >30% above median. Position your current CTC flexibly or target verified Tier-1 product firms.',
-      severity: 'high'
-    });
-  }
-
-  // 2. Missing must-have keywords
-  const missingMustHaves = roleConfig.mustHaveSkills.filter(mh => 
-    !profile.skills.some(s => s.toLowerCase() === mh.toLowerCase())
-  );
-  if (missingMustHaves.length > 0) {
-    reasons.push({
-      id: 'rej-kw',
-      category: 'Keyword Filter Drop',
-      reason: `Profile lacks exact-match keywords: ${missingMustHaves.slice(0, 3).join(', ')}. ATS search queries auto-filter you out.`,
-      probabilityPercent: 84,
-      fix: 'Add these skills to your top competencies and highlight them in your recent experience bullets.',
-      severity: 'high'
-    });
-  }
-
-  // 3. Passive bullets without metrics
-  const bulletsWithMetrics = allBullets.filter(b => b.match(/\d+|%|₹|\$/));
-  if (bulletsWithMetrics.length < 2 && allBullets.length > 0) {
-    reasons.push({
-      id: 'rej-metrics',
-      category: 'Low Impact Proof',
-      reason: 'Recruiters spend 2-4s on experience bullets. Without numbers, you look like a junior task executor.',
-      probabilityPercent: 62,
-      fix: 'Rewrite bullets with power verbs and concrete metrics (latency reduction, transaction volume, team size).',
-      severity: 'medium'
-    });
-  }
-
-  // 4. Cluttered skill count
-  if (profile.skills.length > 30) {
-    reasons.push({
-      id: 'rej-clutter',
-      category: 'Skill Dilution',
-      reason: `Listing ${profile.skills.length} skills triggers recruiter skepticism ("knows a little of everything, master of nothing").`,
+      category: 'Compensation Threshold Advisory',
+      reason: `Target CTC (₹${expectedSalary} LPA) is significantly above typical portal baseline (₹${medianSalary} LPA) for ${profile.targetRole}. High portal filters may flag this in initial automated scans.`,
       probabilityPercent: 55,
-      fix: 'Prune down to 15-20 core skills. Remove outdated tools like MS Office, Eclipse, or basic HTML.',
+      fix: `Do not lower your baseline compensation solely to appease portal screening filters. For higher brackets, prioritize direct recruiter reach-outs, peer referrals, and specialized executive search channels where portal pay caps are bypassed.`,
       severity: 'medium'
     });
   }
 
-  // 5. Notice Period / Location constraint
-  if (profile.targetCities.length < 2) {
+  // 2. Experience seniority gap
+  if (profile.experienceBand === 'Fresher') {
+    reasons.push({
+      id: 'rej-yoe',
+      category: 'Years of Experience Threshold',
+      reason: `Mid-senior roles apply automated filters excluding profiles without full-time years of experience. Profile is currently set to Fresher band.`,
+      probabilityPercent: 65,
+      fix: 'Target Graduate Engineer Trainee (GET), Associate, or Fresher-specific job postings, and showcase substantial project portfolios, hackathons, and internship proofs of execution.',
+      severity: 'medium'
+    });
+  }
+
+  // 3. Location mismatch
+  const hasPreferredCity = profile.targetCities.length > 0;
+  if (!hasPreferredCity) {
     reasons.push({
       id: 'rej-loc',
-      category: 'Location Constraint',
-      reason: 'Restricting to a single city limits recruiter search visibility by 60% in India.',
-      probabilityPercent: 42,
-      fix: 'Include "Bangalore / Bengaluru", "Hyderabad", or "Pune" in your preferred locations if open to relocation.',
+      category: 'Location Filter Exclusion',
+      reason: 'No target cities specified. Recruiter search filters heavily penalize open or unspecified locations.',
+      probabilityPercent: 55,
+      fix: 'Select 2-3 target hiring hubs (e.g. Bengaluru, Pune, Hyderabad, Gurgaon) in your targeting settings.',
+      severity: 'medium'
+    });
+  }
+
+  // 4. Missing metrics
+  const metricCount = allBullets.filter(b => /\b(\d+%|\d+k|\d+x|₹\d+|\$\d+)\b/i.test(b)).length;
+  if (metricCount < 2 && allBullets.length > 2) {
+    reasons.push({
+      id: 'rej-metric',
+      category: 'Lack of Quantified Deliverables',
+      reason: `Only ${metricCount} bullets contain verifiable metrics. Recruiters prioritize candidates with quantified results.`,
+      probabilityPercent: 50,
+      fix: 'Add scale, throughput, or efficiency measurements to your top 3 experience bullets.',
       severity: 'low'
     });
   }
 
-  return reasons.sort((a, b) => b.probabilityPercent - a.probabilityPercent);
+  return reasons;
 }

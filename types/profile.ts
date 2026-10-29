@@ -19,13 +19,40 @@ export interface EducationItem {
   score?: string;
 }
 
+export type ProjectType = 'Academic' | 'Personal' | 'Internship' | 'Hackathon' | 'Open Source';
+
 export interface ProjectItem {
   id: string;
   title: string;
   description: string;
   technologies: string[];
   link?: string;
+  repoLink?: string;
+  role?: string;
+  projectType?: ProjectType;
+  timeline?: string;
   metrics?: string;
+}
+
+export type SkillOrigin = 'extracted' | 'user_added' | 'suggested';
+
+export interface ProfileSkillItem {
+  name: string;
+  origin: SkillOrigin;
+  category?: string;
+  confirmed?: boolean;
+}
+
+export interface ProfessionalProfileData {
+  headline?: string;
+  summary?: string;
+  keySkills?: string[];
+  employment?: string;
+  projects?: string;
+  education?: string;
+  certifications?: string;
+  rawText?: string;
+  updatedAt?: number;
 }
 
 export interface ParsedProfile {
@@ -39,9 +66,11 @@ export interface ParsedProfile {
   experienceBand: ExperienceBand;
   targetCities: string[];
   expectedSalaryLakhs?: number;
+  targetJobDescription?: string;
   headline: string;
   summary: string;
   skills: string[];
+  skillInventory?: ProfileSkillItem[];
   experiences: ExperienceItem[];
   education: EducationItem[];
   projects: ProjectItem[];
@@ -49,4 +78,16 @@ export interface ParsedProfile {
   achievements: string[];
   rawText: string;
   sectionConfidence: Record<string, number>;
+  professionalProfile?: ProfessionalProfileData;
 }
+
+export interface ProfileVersion {
+  id: string;
+  timestamp: number;
+  label: string;
+  role: string;
+  score: number;
+  profile: ParsedProfile;
+  changeReason: string;
+}
+

@@ -1,3 +1,21 @@
+export interface MatchedSkillEvidence {
+  skill: string;
+  evidence: string;
+  foundIn: string;
+}
+
+export interface MissingResumeSkill {
+  skill: string;
+  context: string;
+  recommendation: string;
+}
+
+export interface LearningGapSkill {
+  skill: string;
+  reason: string;
+  difficulty: 'Quick Add' | 'Moderate' | 'Core Prerequisite';
+}
+
 export interface JobDescriptionMatch {
   id: string;
   company: string;
@@ -13,6 +31,9 @@ export interface JobDescriptionMatch {
   };
   matchedSkills: string[];
   missingMustHaves: { skill: string; frequencyPercent: number }[];
+  matchedEvidence?: MatchedSkillEvidence[];
+  missingFromResume?: MissingResumeSkill[];
+  learningGaps?: LearningGapSkill[];
   positioningAdvice: string;
   screeningWindowNotice: string;
 }

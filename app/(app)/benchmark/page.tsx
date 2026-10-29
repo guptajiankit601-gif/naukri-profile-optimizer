@@ -1,5 +1,3 @@
-import HomePage from '@/app/page';
+import BenchmarksPage from '../benchmarks/page';
 
-export default function BenchmarkPage() {
-  return <HomePage initialStep="dashboard" initialTab="benchmarks" />;
-}
+export default BenchmarksPage;

@@ -15,6 +15,7 @@ interface RoleStepProps {
     experienceBand: ExperienceBand;
     targetCities: string[];
     expectedSalaryLakhs: number;
+    jobDescription?: string;
   }) => void;
   onBack: () => void;
 }

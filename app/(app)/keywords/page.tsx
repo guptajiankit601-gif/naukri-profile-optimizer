@@ -1,5 +1,3 @@
-import HomePage from '@/app/page';
+import KeywordAnalysisPage from '../keyword-analysis/page';
 
-export default function KeywordsPage() {
-  return <HomePage initialStep="dashboard" initialTab="keywords" />;
-}
+export default KeywordAnalysisPage;

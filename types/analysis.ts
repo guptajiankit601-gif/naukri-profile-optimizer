@@ -73,6 +73,9 @@ export interface ActionPlanItem {
   expectedPoints: number;
   targetTab: string;
   completed: boolean;
+  reason?: string;
+  criteria?: string;
+  headroomPoints?: number;
 }
 
 export type RecruiterPersona = 'Startup Founder' | 'Enterprise TA' | 'Consultancy Recruiter' | 'HR Screen';

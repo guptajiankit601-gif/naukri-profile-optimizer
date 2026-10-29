@@ -1,72 +1,35 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useReport, AppStep } from '@/lib/context/ReportContext';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { useReport } from '@/lib/context/ReportContext';
 import { AppShell } from '@/components/layout/AppShell';
-import { UploadStep } from '@/components/onboarding/UploadStep';
+import { ResumeIntakeScreen } from '@/components/intake/ResumeIntakeScreen';
 import { RoleStep } from '@/components/onboarding/RoleStep';
 import { TargetingStep } from '@/components/onboarding/TargetingStep';
 import { ProcessingStep } from '@/components/onboarding/ProcessingStep';
-import { Dashboard } from '@/components/Dashboard';
-import { EmptyReportState } from '@/components/shared/EmptyReportState';
-import { ShareCardModal } from '@/components/ShareCardModal';
-import { Hero } from '@/components/marketing/Hero';
-import { RecruiterVsCandidate } from '@/components/marketing/RecruiterVsCandidate';
-import { ProofSection } from '@/components/marketing/ProofSection';
-import { SampleCard } from '@/components/marketing/SampleCard';
-import { Faq } from '@/components/marketing/Faq';
-import { Footer } from '@/components/marketing/Footer';
 import { ExperienceBand } from '@/types';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { BRAND_CONFIG } from '@/config/brand';
 
-export interface HomePageProps {
-  initialStep?: AppStep;
-  initialTab?: string;
-}
-
-export default function HomePage({
-  initialStep,
-  initialTab
-}: HomePageProps) {
+export default function HomePage() {
+  const router = useRouter();
   const {
     profile,
-    isDemo,
     scoreReport,
-    scoreHistory,
-    actionPlan,
+    isDemo,
     currentStep,
-    activeTab,
     loadDemoProfile,
     setRawResumeText,
     updateTargetRole,
     confirmReview,
-    updateProfile,
     resetAnalysis,
-    setActiveTab,
     setCurrentStep
   } = useReport();
 
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const uploadSectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab, setActiveTab]);
-
-  useEffect(() => {
-    if (initialStep && initialStep === 'dashboard' && profile) {
-      setCurrentStep('dashboard');
-    }
-  }, [initialStep, profile, setCurrentStep]);
-
-  const scrollToUpload = () => {
-    if (currentStep !== 'upload') {
-      setCurrentStep('upload');
-    }
-    setTimeout(() => {
-      uploadSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+  const handleSelectDemo = (key: string) => {
+    loadDemoProfile(key);
+    router.push('/dashboard');
   };
 
   const handleTargetRoleConfirmed = (data: {
@@ -79,55 +42,58 @@ export default function HomePage({
     updateTargetRole(data);
   };
 
-  // Determine active view: if on dashboard step or direct route with no profile, show EmptyState
-  const isDashboardRoute = initialStep === 'dashboard' || currentStep === 'dashboard';
-
-  const targetRoleBadge = profile
-    ? `${profile.targetRole} · ${profile.experienceBand} · ${profile.location?.split(',')[0] || 'India'}`
-    : 'Deterministic Resume Audit';
+  const handleProcessingComplete = () => {
+    setCurrentStep('dashboard');
+    router.push('/dashboard');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B1521] to-[#0F2233] text-[#F2F5F8] flex flex-col font-sans selection:bg-[#FF7582] selection:text-slate-900">
-      <AppShell
-        currentScore={profile && scoreReport ? scoreReport.overallScore : undefined}
-        scoreReport={scoreReport || undefined}
-        targetRoleBadge={targetRoleBadge}
-        isDemo={isDemo}
-        actionPlan={actionPlan}
-        activeTab={activeTab}
-        onNavigateTab={setActiveTab}
-        onSelectSeededProfile={loadDemoProfile}
-        onReset={resetAnalysis}
-        onOpenShareCard={() => setIsShareModalOpen(true)}
-      >
-        {/* If on a dashboard route but no resume profile is loaded, show clean Empty State */}
-        {isDashboardRoute && !profile && (
-          <EmptyReportState onGoToUpload={scrollToUpload} />
-        )}
-
-        {/* Normal Intake Flow */}
-        {!isDashboardRoute && currentStep === 'upload' && (
-          <div className="space-y-12">
-            <Hero
-              onGetStarted={scrollToUpload}
-              onSelectPersona={loadDemoProfile}
-            />
-
-            <div ref={uploadSectionRef} className="max-w-4xl mx-auto px-4">
-              <UploadStep
-                onParsedTextReady={setRawResumeText}
-                onSelectSeededProfile={loadDemoProfile}
-              />
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1422] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+      <AppShell>
+        {/* If user already has an active resume session, give instant jump bar */}
+        {profile && scoreReport && (
+          <div className="max-w-2xl mx-auto w-full px-4 mb-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-slate-900">
+                    Active {isDemo ? 'Sample Demo' : 'Resume'} for{' '}
+                    <span className="font-bold text-blue-600">{profile.name}</span> ({profile.targetRole})
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Quality score: <span className="font-bold text-slate-900">{scoreReport.overallScore}/100</span> · All workspace tools available
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Open Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={resetAnalysis}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 font-medium text-xs rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Upload New
+                </button>
+              </div>
             </div>
-
-            <RecruiterVsCandidate />
-            <ProofSection />
-            <SampleCard />
-            <Faq />
-            <Footer />
           </div>
         )}
 
+        {/* Step 1: Clean First-Visit Onboarding & Resume Intake */}
+        {currentStep === 'upload' && (
+          <ResumeIntakeScreen
+            onParsedTextReady={(text, name, jd, profText) => setRawResumeText(text, name, jd, profText)}
+            onSelectDemoProfile={handleSelectDemo}
+          />
+        )}
+
+        {/* Step 2: Target Role & Experience Band Confirmation */}
         {currentStep === 'target-role' && profile && (
           <RoleStep
             initialRoleId={profile.targetRoleId}
@@ -139,6 +105,7 @@ export default function HomePage({
           />
         )}
 
+        {/* Step 3: Candidate Verification Review & Field Correction */}
         {currentStep === 'review' && profile && (
           <TargetingStep
             initialProfile={profile}
@@ -147,32 +114,24 @@ export default function HomePage({
           />
         )}
 
+        {/* Step 4: 10-Point Deterministic Assessment Stepper */}
         {currentStep === 'analysis' && (
-          <ProcessingStep onComplete={() => setCurrentStep('dashboard')} />
+          <ProcessingStep onComplete={handleProcessingComplete} />
         )}
 
-        {/* Dashboard Active Workspace */}
-        {isDashboardRoute && profile && scoreReport && (
-          <Dashboard
-            profile={profile}
-            scoreReport={scoreReport}
-            scoreHistory={scoreHistory}
-            actionPlan={actionPlan}
-            onUpdateProfile={updateProfile}
-            onOpenShareCard={() => setIsShareModalOpen(true)}
-            activeTab={activeTab}
-            onNavigateTab={setActiveTab}
-          />
-        )}
-
-        {/* Share Card Modal */}
-        {profile && scoreReport && (
-          <ShareCardModal
-            isOpen={isShareModalOpen}
-            onClose={() => setIsShareModalOpen(false)}
-            profile={profile}
-            scoreReport={scoreReport}
-          />
+        {/* If on step 'dashboard', show quick launcher */}
+        {currentStep === 'dashboard' && profile && (
+          <div className="max-w-md mx-auto p-12 text-center space-y-4">
+            <Sparkles className="w-8 h-8 text-blue-600 mx-auto animate-pulse" />
+            <h3 className="text-lg font-bold text-slate-900">Opening {BRAND_CONFIG.name}...</h3>
+            <p className="text-xs text-slate-500">Loading your comprehensive resume assessment and recommendations.</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg shadow-xs cursor-pointer transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
         )}
       </AppShell>
     </div>

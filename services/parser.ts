@@ -3,9 +3,26 @@ import { matchSkillsInText } from '@/data/skills-dict';
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
-// Set up pdfjs worker using unpkg or dynamic import
+// 1. Polyfill Uint8Array.prototype.toHex globally for browsers and runtimes where TC39 toHex is not yet native
+if (typeof Uint8Array !== 'undefined' && typeof (Uint8Array.prototype as { toHex?: () => string }).toHex !== 'function') {
+  (Uint8Array.prototype as unknown as { toHex: () => string }).toHex = function () {
+    return Array.from(this, (byte: number) => byte.toString(16).padStart(2, '0')).join('');
+  };
+}
+
+// 2. Set up same-origin pdfjs worker (served locally from /public/pdf.worker.min.mjs to prevent CORS / CDN blocking)
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+}
+
+export interface FileExtractionDetails {
+  text: string;
+  charCount: number;
+  wordCount: number;
+  pageCount?: number;
+  format: 'pdf' | 'docx' | 'txt';
+  isScannedPdf: boolean;
+  warnings: string[];
 }
 
 export interface ParseResult {
@@ -14,53 +31,247 @@ export interface ParseResult {
   issues: string[];
 }
 
-export async function extractTextFromFile(file: File): Promise<string> {
-  const extension = file.name.split('.').pop()?.toLowerCase();
+/**
+ * Validates actual binary signature (magic bytes) to catch file masquerading
+ */
+function inspectFileSignature(buffer: ArrayBuffer): 'pdf' | 'docx' | 'txt' | 'unknown' {
+  if (buffer.byteLength < 4) return 'txt';
+  const bytes = new Uint8Array(buffer.slice(0, 4));
 
-  if (extension === 'txt') {
-    return await file.text();
+  // %PDF (0x25, 0x50, 0x44, 0x46)
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return 'pdf';
   }
 
-  if (extension === 'docx') {
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value;
+  // PK\x03\x04 zip archive used by .docx
+  if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) {
+    return 'docx';
   }
 
-  if (extension === 'pdf') {
+  // UTF-8 / ASCII text inspection
+  const isAsciiOrUtf8 = Array.from(bytes).every(
+    b => b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126) || b > 127
+  );
+  if (isAsciiOrUtf8) {
+    return 'txt';
+  }
+
+  return 'unknown';
+}
+
+/**
+ * Server-side fallback parsing when client-side environment blocks Web Workers or encounters CSP restrictions
+ */
+async function fallbackServerParse(file: File): Promise<FileExtractionDetails> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/parse/file', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.error || `Server extraction failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = (data.text || '').trim();
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+  return {
+    text,
+    charCount: text.length,
+    wordCount,
+    pageCount: data.pageCount || 1,
+    format: data.format || 'pdf',
+    isScannedPdf: Boolean(data.isScannedPdf),
+    warnings: data.isScannedPdf
+      ? ['This document appears to be an image-only or scanned PDF without selectable text. Recruiter ATS systems cannot read scanned resumes. Please paste your resume text directly.']
+      : []
+  };
+}
+
+/**
+ * Comprehensive document text extractor supporting PDF, DOCX, and TXT with multi-page handling,
+ * line preservation, scanned-PDF detection, and automated server fallback.
+ */
+export async function extractDocumentFromFile(file: File): Promise<FileExtractionDetails> {
+  // 1. File Size Guard (5MB limit)
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error(`File size ${(file.size / (1024 * 1024)).toFixed(1)}MB exceeds the 5MB limit. Please upload a smaller document.`);
+  }
+
+  const rawExt = file.name.split('.').pop()?.toLowerCase();
+  const allowedExts = ['pdf', 'docx', 'txt'];
+  if (!rawExt || !allowedExts.includes(rawExt)) {
+    if (rawExt === 'doc') {
+      throw new Error('Legacy binary .doc format is not supported. Please save your file as .docx or .pdf in Word or Google Docs, or paste your resume text directly.');
+    }
+    throw new Error(`Unsupported file type (.${rawExt || 'unknown'}). Only PDF, DOCX, and TXT documents under 5MB are supported.`);
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const detectedType = inspectFileSignature(arrayBuffer);
+
+  // 2. Plain Text Handling
+  if (rawExt === 'txt') {
+    const text = new TextDecoder('utf-8').decode(arrayBuffer).trim();
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    return {
+      text,
+      charCount: text.length,
+      wordCount,
+      pageCount: 1,
+      format: 'txt',
+      isScannedPdf: false,
+      warnings: []
+    };
+  }
+
+  // 3. Word Document (.docx) Handling
+  if (rawExt === 'docx') {
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-      let fullText = '';
+      const mammothOptions = typeof Buffer !== 'undefined'
+        ? { buffer: Buffer.from(arrayBuffer) }
+        : { arrayBuffer };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await mammoth.extractRawText(mammothOptions as any);
+      const text = (result.value || '').trim();
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((item: any) => item.str)
-          .join(' ');
-        fullText += pageText + '\n\n';
+      if (text.length < 10) {
+        throw new Error('Word document contains insufficient readable text. Please paste your resume text directly.');
       }
 
-      if (fullText.trim().length < 50) {
-        throw new Error('SCANNED_PDF_DETECTED');
+      return {
+        text,
+        charCount: text.length,
+        wordCount,
+        pageCount: 1,
+        format: 'docx',
+        isScannedPdf: false,
+        warnings: result.messages?.map(m => m.message) || []
+      };
+    } catch (docxErr: unknown) {
+      if (typeof window !== 'undefined') {
+        try {
+          return await fallbackServerParse(file);
+        } catch {
+          // continue to throw clean message
+        }
       }
-
-      return fullText;
-    } catch (err: unknown) {
-      if ((err as Error)?.message === 'SCANNED_PDF_DETECTED') {
-        throw new Error('This looks like a scanned/image-only PDF. Please paste your resume text manually for best accuracy.');
-      }
-      if ((err as { name?: string })?.name === 'PasswordException') {
-        throw new Error('The PDF is password protected. Please remove password protection or paste your resume text.');
-      }
-      throw new Error('Unable to extract text from this PDF. Please copy and paste your resume text directly.');
+      throw new Error((docxErr as Error)?.message || 'Failed to extract text from Word document. Please verify the document is not corrupted.');
     }
   }
 
-  throw new Error('Unsupported file format. Please upload PDF, DOCX, or TXT file.');
+  // 4. PDF Document Handling
+  if (rawExt === 'pdf' || detectedType === 'pdf') {
+    try {
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(arrayBuffer)
+      });
+
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+      const totalPages = pdf.numPages;
+
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageLines: string[] = [];
+        let currentLine = '';
+        let lastY: number | null = null;
+
+        for (const item of textContent.items) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const textItem = item as any;
+          const str = textItem.str || '';
+          const transform = textItem.transform;
+          const y = transform ? transform[5] : null;
+
+          if (lastY !== null && y !== null && Math.abs(y - lastY) > 5) {
+            if (currentLine.trim()) {
+              pageLines.push(currentLine.trim());
+            }
+            currentLine = str;
+          } else {
+            currentLine += (currentLine ? ' ' : '') + str;
+          }
+          lastY = y;
+        }
+
+        if (currentLine.trim()) {
+          pageLines.push(currentLine.trim());
+        }
+
+        fullText += pageLines.join('\n') + '\n\n';
+      }
+
+      const trimmedText = fullText.trim();
+      const wordCount = trimmedText.split(/\s+/).filter(Boolean).length;
+      const isScannedPdf = trimmedText.length < 50;
+
+      if (isScannedPdf) {
+        return {
+          text: trimmedText,
+          charCount: trimmedText.length,
+          wordCount,
+          pageCount: totalPages,
+          format: 'pdf',
+          isScannedPdf: true,
+          warnings: ['This document appears to be an image-only or scanned PDF without selectable text. Recruiter ATS systems cannot read scanned resumes. Please paste your resume text directly.']
+        };
+      }
+
+      return {
+        text: trimmedText,
+        charCount: trimmedText.length,
+        wordCount,
+        pageCount: totalPages,
+        format: 'pdf',
+        isScannedPdf: false,
+        warnings: []
+      };
+    } catch (clientErr: unknown) {
+      const errObj = clientErr as { name?: string; message?: string };
+
+      // Password Protected
+      if (errObj?.name === 'PasswordException' || errObj?.message?.toLowerCase().includes('password')) {
+        throw new Error('This PDF is password-protected. Please remove password protection and re-upload, or paste your resume text.');
+      }
+
+      // Invalid / Corrupt PDF
+      if (errObj?.name === 'InvalidPDFException' || errObj?.message?.toLowerCase().includes('corrupted')) {
+        throw new Error('The uploaded PDF appears corrupted or unreadable. Please check that the file opens correctly on your device and re-upload.');
+      }
+
+      // Try automated server fallback if in browser
+      if (typeof window !== 'undefined') {
+        try {
+          return await fallbackServerParse(file);
+        } catch {
+          // continue to throw actionable error below
+        }
+      }
+
+      throw new Error('Unable to extract selectable text from this PDF. If this document was generated by a scanner or contains flattened images, please paste your resume text directly.');
+    }
+  }
+
+  throw new Error(`Unsupported file type (.${rawExt}). Only PDF, DOCX, and TXT documents under 5MB are supported.`);
+}
+
+/**
+ * Backwards-compatible text extractor
+ */
+export async function extractTextFromFile(file: File): Promise<string> {
+  const result = await extractDocumentFromFile(file);
+  if (result.isScannedPdf) {
+    throw new Error('This document appears to be an image-only or scanned PDF without selectable text. Recruiter ATS systems cannot read scanned resumes. Please paste your resume text directly.');
+  }
+  return result.text;
 }
 
 // Sweep text for numeric proof, %, currency, scale metrics

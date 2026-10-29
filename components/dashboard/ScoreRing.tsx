@@ -32,9 +32,9 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       <svg width={size} height={size} className="-rotate-90">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FF7582" />
-            <stop offset="50%" stopColor="#C56C86" />
-            <stop offset="100%" stopColor="#725A7A" />
+            <stop offset="0%" stopColor="#2563EB" />
+            <stop offset="50%" stopColor="#4F46E5" />
+            <stop offset="100%" stopColor="#7C3AED" />
           </linearGradient>
         </defs>
 
@@ -44,7 +44,8 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           cy={size / 2}
           r={radius}
           fill="transparent"
-          stroke="rgba(255, 255, 255, 0.08)"
+          stroke="currentColor"
+          className="text-slate-200 dark:text-slate-800"
           strokeWidth={strokeWidth}
         />
 
@@ -64,10 +65,10 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-3xl font-black text-white tracking-tight leading-none">
+        <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-none">
           {score}
         </span>
-        <span className="text-[10px] uppercase font-semibold text-slate-400 mt-1">
+        <span className="text-[10px] uppercase font-semibold text-slate-500 dark:text-slate-400 mt-1">
           {label || `out of ${maxScore}`}
         </span>
       </div>

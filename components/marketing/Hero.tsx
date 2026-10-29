@@ -19,7 +19,7 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onSelectPersona }) => 
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[rgba(255,117,130,0.1)] border border-[rgba(255,117,130,0.25)] text-[#FF7582] text-xs font-semibold tracking-wide backdrop-blur-md">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>100% Free · No Signup Required · Indian Job Board Heuristics</span>
+          <span>100% Free · No Signup Required · Indian Job Board Evaluation</span>
         </div>
 
         {/* Main Headline */}

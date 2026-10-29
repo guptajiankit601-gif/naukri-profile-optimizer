@@ -13,7 +13,6 @@ export interface ActionPlanSummary {
 
 export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
   const completeness = calculateCompletenessScore(profile);
-  const visibility = calculateVisibilityScore(profile);
   const keywordAnalysis = analyzeKeywordGaps(profile);
 
   const currentScore = completeness.overallScore;
@@ -23,6 +22,8 @@ export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
     id: string;
     title: string;
     description: string;
+    reason: string;
+    criteria: string;
     estimatedMinutes: number;
     potentialGain: number;
     targetTab: string;
@@ -37,11 +38,13 @@ export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
     const gain = headlineComp.max - headlineComp.score;
     candidateTasks.push({
       id: 'task-headline',
-      title: 'Upgrade Headline with Role & Impact Metric',
-      description: 'Replace generic job title with the 3-part formula (Role | Core Stack | Quantified Metric) to increase recruiter search CTR.',
+      title: 'Upgrade Headline with Role & Stack Specialization',
+      description: 'Replace generic job title with the 3-part recruiter formula: [Target Role] | [Core Technologies] | [Experience or Domain Focus].',
+      reason: 'Recruiters and search algorithms index the first 120 characters to match query keywords.',
+      criteria: 'Headline Clarity & Search Indexing',
       estimatedMinutes: 5,
       potentialGain: gain,
-      targetTab: 'headline',
+      targetTab: 'headlines',
       roi: gain / 5
     });
   }
@@ -53,7 +56,9 @@ export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
     candidateTasks.push({
       id: 'task-keywords',
       title: `Add ${keywordAnalysis.highPriorityMissing.length} Critical Missing Keywords`,
-      description: `Include high-volume filter terms (${topMissing}) in your key skills and project summaries.`,
+      description: `Incorporate high-volume filter terms (${topMissing}) in your key skills and project summaries.`,
+      reason: 'Automated recruiter searches filter profiles lacking must-have primary technology keywords.',
+      criteria: 'Skill & Search Keyword Relevance',
       estimatedMinutes: 10,
       potentialGain: kwGain,
       targetTab: 'keywords',
@@ -61,98 +66,115 @@ export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
     });
   }
 
-  // 3. Bullet rewriting & metrics
-  const bulletComp = completeness.components.find(c => c.key === 'bulletQuality');
-  if (bulletComp && bulletComp.score < bulletComp.max) {
-    const gain = bulletComp.max - bulletComp.score;
+  // 3. Bullet rewriting & active ownership
+  const expComp = completeness.components.find(c => c.key === 'experienceRelevance');
+  if (expComp && expComp.score < expComp.max) {
+    const gain = expComp.max - expComp.score;
     candidateTasks.push({
       id: 'task-bullets',
-      title: 'Rewrite Passive Experience Bullets',
-      description: 'Transform passive statements ("responsible for") into power-verb accomplishments with quantifiable outcomes.',
+      title: 'Rewrite Passive Experience Bullets to Active Ownership',
+      description: 'Transform passive statements ("Responsible for", "Helped with") into active verb achievements preserving your real technologies.',
+      reason: 'Recruiters scan bullets in under 6 seconds; strong action verbs communicate engineering ownership.',
+      criteria: 'Experience Relevance & Action Verbs',
       estimatedMinutes: 15,
-      potentialGain: Math.min(10, gain),
+      potentialGain: Math.min(8, gain),
       targetTab: 'rewriter',
-      roi: Math.min(10, gain) / 15
+      roi: Math.min(8, gain) / 15
     });
   }
 
-  // 4. Distractor keyword removal
-  if (keywordAnalysis.distractorsToRemove.length > 0) {
+  // 4. Quantified outcomes & impact
+  const impactComp = completeness.components.find(c => c.key === 'achievementImpact');
+  if (impactComp && impactComp.score < impactComp.max) {
+    const gain = impactComp.max - impactComp.score;
     candidateTasks.push({
-      id: 'task-distractors',
-      title: 'Prune Low-Value Noise Skills',
-      description: `Remove outdated noise keywords (${keywordAnalysis.distractorsToRemove.slice(0, 2).map(d => d.term).join(', ')}) that dilute your senior technical positioning.`,
-      estimatedMinutes: 5,
-      potentialGain: 3,
-      targetTab: 'keywords',
-      roi: 3 / 5
+      id: 'task-metrics',
+      title: 'Incorporate Verified Deliverables & Scale Metrics',
+      description: 'Add genuine performance numbers (%, throughput, latency, users, SLA) or use metric-ready placeholders to prove execution.',
+      reason: 'Profiles with concrete outcome metrics differentiate candidates from generic job-holders.',
+      criteria: 'Achievement & Quantified Impact',
+      estimatedMinutes: 15,
+      potentialGain: Math.min(7, gain),
+      targetTab: 'rewriter',
+      roi: Math.min(7, gain) / 15
     });
   }
 
-  // 5. Summary rewrite
+  // 5. Projects portfolio
+  const projComp = completeness.components.find(c => c.key === 'projectsPortfolio');
+  if (projComp && projComp.score < projComp.max) {
+    const gain = projComp.max - projComp.score;
+    candidateTasks.push({
+      id: 'task-projects',
+      title: profile.experienceBand === 'Fresher'
+        ? 'Document 2-3 Verified Projects with GitHub Links'
+        : 'Feature 1-2 Scaled Project Deliverables',
+      description: 'Specify problem context, modern architectural stack, and link live demos or repositories to substantiate practical execution.',
+      reason: profile.experienceBand === 'Fresher'
+        ? 'For freshers, technical projects serve as primary proof of execution in place of full-time work.'
+        : 'Demonstrates modern architecture and hands-on tool mastery beyond daily maintenance.',
+      criteria: 'Projects & Technical Portfolio',
+      estimatedMinutes: 20,
+      potentialGain: gain,
+      targetTab: 'rewriter',
+      roi: gain / 20
+    });
+  }
+
+  // 6. Summary rewrite
   const summaryComp = completeness.components.find(c => c.key === 'summaryQuality');
   if (summaryComp && summaryComp.score < summaryComp.max) {
     const gain = summaryComp.max - summaryComp.score;
     candidateTasks.push({
       id: 'task-summary',
-      title: 'Craft a 3-Sentence Professional Pitch',
-      description: 'Remove generic objective clichés and lead with your years of domain depth and highest quantified achievement.',
+      title: 'Craft a 3-Sentence Professional Summary Pitch',
+      description: 'Remove generic objective clichés ("looking for an opportunity") and lead with your core technical depth and verified achievements.',
+      reason: 'Recruiters read the summary to confirm role seniority and specialization before viewing experience.',
+      criteria: 'Professional Summary Pitch',
       estimatedMinutes: 10,
       potentialGain: gain,
-      targetTab: 'profile',
+      targetTab: 'headlines',
       roi: gain / 10
     });
   }
 
-  // 6. ATS parseability fix
-  const parseComp = completeness.components.find(c => c.key === 'parseability');
-  if (parseComp && parseComp.score < parseComp.max) {
-    const gain = parseComp.max - parseComp.score;
+  // 7. ATS parseability fix
+  const atsComp = completeness.components.find(c => c.key === 'atsReadability');
+  if (atsComp && atsComp.score < atsComp.max) {
+    const gain = atsComp.max - atsComp.score;
     candidateTasks.push({
-      id: 'task-parseability',
-      title: 'Standardize Resume Section Headers',
-      description: 'Ensure standard headers (Experience, Education, Skills, Summary) so automated ATS parsers don\'t drop history.',
+      id: 'task-ats',
+      title: 'Standardize Resume Section Headers & Single-Column Layout',
+      description: 'Ensure standard headers (EXPERIENCE, EDUCATION, SKILLS, SUMMARY, PROJECTS) in single-column layout so automated parsers do not drop content.',
+      reason: 'Non-standard headings or complex multi-column tables risk losing key sections in recruiting software.',
+      criteria: 'ATS Parseability & Section Structure',
       estimatedMinutes: 10,
       potentialGain: gain,
-      targetTab: 'profile',
+      targetTab: 'export',
       roi: gain / 10
     });
   }
 
-  // 7. Projects proof
-  const projComp = completeness.components.find(c => c.key === 'projectsProof');
-  if (projComp && projComp.score < projComp.max) {
-    const gain = projComp.max - projComp.score;
+  // 8. Distractor keyword removal
+  if (keywordAnalysis.distractorsToRemove.length > 0) {
     candidateTasks.push({
-      id: 'task-projects',
-      title: 'Document 1-2 Scaled Project Deliverables',
-      description: 'Add problem context, architectural stack, and GitHub or live system links to substantiate hands-on capabilities.',
-      estimatedMinutes: 25,
-      potentialGain: gain,
-      targetTab: 'profile',
-      roi: gain / 25
-    });
-  }
-
-  // 8. Contact & verification
-  const contactComp = completeness.components.find(c => c.key === 'contactCredibility');
-  if (contactComp && contactComp.score < contactComp.max) {
-    candidateTasks.push({
-      id: 'task-contact',
-      title: 'Verify Direct Contact Details & LinkedIn URL',
-      description: 'Add a clean professional email, 10-digit Indian phone number, and customized LinkedIn profile handle.',
+      id: 'task-distractors',
+      title: 'Prune Low-Value Generic Skills',
+      description: `Remove outdated noise keywords (${keywordAnalysis.distractorsToRemove.slice(0, 2).map(d => d.term).join(', ')}) that dilute your technical positioning.`,
+      reason: 'Generic office skills dilute keyword relevance in recruiter search filters.',
+      criteria: 'Skill & Search Keyword Relevance',
       estimatedMinutes: 5,
-      potentialGain: contactComp.max - contactComp.score,
-      targetTab: 'profile',
-      roi: (contactComp.max - contactComp.score) / 5
+      potentialGain: 2,
+      targetTab: 'keywords',
+      roi: 2 / 5
     });
   }
 
   // Sort candidate tasks by points-per-minute ROI (highest ROI first)
   candidateTasks.sort((a, b) => b.roi - a.roi);
 
-  // Group into Day buckets, capping Today to < 45 min, and total to max 12 tasks
-  const prioritized = candidateTasks.slice(0, 12);
+  // Group into Day buckets, capping Today to < 45 min
+  const prioritized = candidateTasks.slice(0, 10);
 
   let todayMinutes = 0;
   let accumulatedGain = 0;
@@ -183,7 +205,10 @@ export function generateActionPlan(profile: ParsedProfile): ActionPlanSummary {
       estimatedMinutes: t.estimatedMinutes,
       expectedPoints: clampedGain,
       targetTab: t.targetTab,
-      completed: false
+      completed: false,
+      reason: t.reason,
+      criteria: t.criteria,
+      headroomPoints: clampedGain
     });
   }
 

@@ -1,98 +1,141 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
+  LayoutDashboard,
+  ClipboardCheck,
   Eye, 
   Sparkles, 
+  ShieldCheck, 
   FileEdit, 
   Type, 
   Crosshair, 
-  Users, 
   CheckSquare, 
-  Download, 
-  TrendingUp,
-  AlertOctagon
+  History, 
+  Download,
+  Briefcase,
+  Settings,
+  FolderGit2,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SideNavProps {
-  activeTab: string;
-  onNavigateTab: (tabId: string) => void;
-  collapsed?: boolean;
-  onToggleCollapse?: () => void;
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  aliases?: string[];
+  badge?: string;
 }
 
-export const SideNav: React.FC<SideNavProps> = ({
-  activeTab,
-  onNavigateTab
-}) => {
-  const sections = [
-    {
-      title: 'Analyze',
-      items: [
-        { id: 'recruiter-sim', label: 'Recruiter View (6s)', icon: <Eye className="w-4 h-4" /> },
-        { id: 'keywords', label: 'Keyword Gap Radar', icon: <Sparkles className="w-4 h-4" /> },
-        { id: 'rejection', label: 'Rejection Predictor', icon: <AlertOctagon className="w-4 h-4" /> }
-      ]
-    },
-    {
-      title: 'Optimize Content',
-      items: [
-        { id: 'rewriter', label: 'Bullet Rewriter', icon: <FileEdit className="w-4 h-4" /> },
-        { id: 'headlines', label: 'Headline Fixer', icon: <Type className="w-4 h-4" /> }
-      ]
-    },
-    {
-      title: 'Targeting & Strategy',
-      items: [
-        { id: 'job-fit', label: 'Job Fit Matcher', icon: <Crosshair className="w-4 h-4" /> },
-        { id: 'benchmarks', label: 'Peer Benchmarks', icon: <Users className="w-4 h-4" /> },
-        { id: 'action-plan', label: '7-Day Action Plan', icon: <CheckSquare className="w-4 h-4" /> },
-        { id: 'progress', label: 'Progress History', icon: <TrendingUp className="w-4 h-4" /> }
-      ]
-    },
-    {
-      title: 'Deliverables',
-      items: [
-        { id: 'export', label: 'ATS Resume Export', icon: <Download className="w-4 h-4" /> }
-      ]
-    }
-  ];
+export interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    title: 'Home',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/audit', label: 'Complete Profile Audit', icon: ClipboardCheck, badge: 'Unified', aliases: ['/profile-audit', '/complete-audit'] }
+    ]
+  },
+  {
+    title: 'Optimize',
+    items: [
+      { href: '/screening-audit', label: 'Resume Score', icon: ShieldCheck, aliases: ['/rejection', '/score'] },
+      { href: '/job-fit', label: 'Job Match', icon: Crosshair },
+      { href: '/keyword-analysis', label: 'Keywords & Skills', icon: Sparkles, aliases: ['/keywords'] },
+      { href: '/recruiter-view', label: 'Recruiter Preview', icon: Eye }
+    ]
+  },
+  {
+    title: 'Build Your Profile',
+    items: [
+      { href: '/bullet-rewriter', label: 'Bullet Rewriter', icon: FileEdit, aliases: ['/rewriter'] },
+      { href: '/headline-fixer', label: 'Naukri Profile & Headline', icon: Type, aliases: ['/headlines', '/naukri-profile'] },
+      { href: '/proof-of-work', label: 'Proof of Work Vault', icon: FolderGit2, badge: 'Vault', aliases: ['/projects'] }
+    ]
+  },
+  {
+    title: 'Apply',
+    items: [
+      { href: '/applications', label: 'Job Applications', icon: Briefcase, aliases: ['/application-tracker'] },
+      { href: '/interview-prep', label: 'Interview Preparation', icon: GraduationCap }
+    ]
+  },
+  {
+    title: 'Track Progress',
+    items: [
+      { href: '/action-plan', label: 'Action Plan', icon: CheckSquare },
+      { href: '/history', label: 'Version History', icon: History, aliases: ['/score-card'] }
+    ]
+  },
+  {
+    title: 'Preferences',
+    items: [
+      { href: '/settings', label: 'Settings', icon: Settings },
+      { href: '/resume-export', label: 'Export Resume', icon: Download, aliases: ['/export'] }
+    ]
+  }
+];
+
+export const SideNav: React.FC = () => {
+  const pathname = usePathname();
+
+  const isItemActive = (item: NavItem): boolean => {
+    if (pathname === item.href) return true;
+    if (item.aliases && item.aliases.includes(pathname)) return true;
+    return false;
+  };
 
   return (
-    <aside className="w-64 shrink-0 h-[calc(100vh-80px)] sticky top-20 bg-[#0F2233]/70 backdrop-blur-xl border-r border-white/10 hidden lg:flex flex-col justify-between p-4 z-20">
-      <div className="space-y-6 overflow-y-auto pr-1">
-        {sections.map((sec) => (
-          <div key={sec.title} className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8FA3B8] px-3 py-1">
-              {sec.title}
+    <aside
+      aria-label="Sidebar Navigation"
+      className="w-60 shrink-0 hidden lg:block sticky top-16 h-[calc(100vh-4rem)] bg-white dark:bg-[#0B1422] border-r border-slate-200 dark:border-slate-800/80 p-4 overflow-y-auto no-print transition-colors duration-200"
+    >
+      <div className="space-y-6">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.title} className="space-y-1">
+            <div className="px-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              {section.title}
             </div>
-            {sec.items.map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigateTab(item.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer',
-                    isActive
-                      ? 'bg-[rgba(255,117,130,0.12)] text-[#FF7582] border-l-2 border-[#FF7582] font-bold shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  )}
-                >
-                  <span className={isActive ? 'text-[#FF7582]' : 'text-slate-400'}>
-                    {item.icon}
-                  </span>
-                  <span className="truncate">{item.label}</span>
-                </button>
-              );
-            })}
+
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const active = isItemActive(item);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                      active
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#142236]'
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon className={cn('w-4 h-4 shrink-0', active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500')} />
+                      <span className="truncate">{item.label}</span>
+                    </div>
+
+                    {item.badge && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         ))}
-      </div>
-
-      <div className="pt-4 border-t border-white/10 text-[10px] text-slate-500 text-center">
-        <span>Deterministic Scoring Engine</span>
       </div>
     </aside>
   );
