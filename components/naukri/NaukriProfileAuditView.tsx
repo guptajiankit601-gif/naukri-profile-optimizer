@@ -197,7 +197,7 @@ export const NaukriProfileAuditView: React.FC<NaukriProfileAuditViewProps> = ({
             />
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-slate-500">
-                Formula: [Target Role] | [Core Tech 1 & 2] | [Years Experience] | [Domain / Scale]
+                Formula: Target Role | Core Tech 1 & 2 | Years Experience | Domain / Scale
               </span>
               <button
                 onClick={handleSaveHeadline}

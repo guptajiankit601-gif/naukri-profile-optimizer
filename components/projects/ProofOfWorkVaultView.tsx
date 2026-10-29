@@ -50,6 +50,11 @@ export const ProofOfWorkVaultView: React.FC<ProofOfWorkVaultViewProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Synchronize state immediately when active profile changes
+  React.useEffect(() => {
+    setProjects(profile.projects || []);
+  }, [profile.projects]);
+
   // Delete confirmation modal state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
@@ -220,9 +225,9 @@ export const ProofOfWorkVaultView: React.FC<ProofOfWorkVaultViewProps> = ({
       )}
 
       {/* 1. Header Banner */}
-      <div className="bg-white dark:bg-[#142236] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
+      <div className="bg-white dark:bg-[#142236] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 text-[11px] font-semibold mb-2">
               <FolderGit2 className="w-3.5 h-3.5" />
               <span>Evidence-Based Portfolio</span>
@@ -237,7 +242,7 @@ export const ProofOfWorkVaultView: React.FC<ProofOfWorkVaultViewProps> = ({
 
           <button
             onClick={handleOpenAddModal}
-            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-2 shadow-xs cursor-pointer shrink-0 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer shrink-0 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Add Project</span>

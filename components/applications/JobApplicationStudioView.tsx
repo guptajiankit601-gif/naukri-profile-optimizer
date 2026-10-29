@@ -185,7 +185,7 @@ ${profile.name}
 ${profile.phone ? `${profile.phone} | ` : ''}${profile.email}`;
 
     // 4. Recruiter InMail / Short Connection Message (< 300 chars for LinkedIn)
-    const generatedInMail = `Hi [Recruiter Name], I saw ${company}'s opening for ${roleTitle}. With production experience in ${matchedList} at ${topCompany}, my background strongly aligns with your requirements. Would love to connect and share my resume! — ${profile.name}`;
+    const generatedInMail = `Hi Hiring Team, I saw ${company}'s opening for ${roleTitle}. With production experience in ${matchedList} at ${topCompany}, my background strongly aligns with your requirements. Would love to connect and share my resume! — ${profile.name}`;
 
     // 5. Role-Specific Interview Questions & Evidence Talking Points
     const generatedQuestions = [

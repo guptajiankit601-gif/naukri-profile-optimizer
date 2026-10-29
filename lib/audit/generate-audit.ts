@@ -130,14 +130,15 @@ export function generateCompleteProfileAudit(
         category: 'completeness',
         title: 'Insufficient Project Portfolio for Early-Career Profile',
         status: resolvedIds.has('comp-fresher-projects') ? 'resolved' : 'needs_attention',
+        isResolved: resolvedIds.has('comp-fresher-projects'),
         priority: 'high',
         whatWeFound: `Only ${projCount} project${projCount === 1 ? '' : 's'} detected. Freshers need at least 2 substantiated technical projects.`,
         evidence: projCount === 0 ? 'No project descriptions extracted' : `1 project: "${profile.projects[0]?.title}"`,
         whyItMatters: 'Without corporate tenure, hiring managers evaluate freshers based on GitHub repositories, capstone projects, and coding assignments.',
-        suggestedImprovement: 'Add 2 detailed projects showing: Problem solved, exact tech stack used, and your personal contribution.',
-        actionLabel: 'Add Technical Projects',
-        actionHref: '/bullet-rewriter?target=projects',
-        actionTab: 'rewriter',
+        suggestedImprovement: 'Add 2 detailed projects showing: Problem solved, exact tech stack used, and your personal contribution in the Proof of Work Vault.',
+        actionLabel: 'Open Proof of Work Vault',
+        actionHref: '/proof-of-work',
+        actionTab: 'projects',
         howAssessed: 'Fresher evaluation weight: 19 points assigned to projects & proof-of-work.'
       });
     } else {
@@ -151,9 +152,9 @@ export function generateCompleteProfileAudit(
         evidence: profile.projects.map(p => p.title).join(', '),
         whyItMatters: 'Provides recruiters with verifiable proof of hands-on technical competence.',
         suggestedImprovement: 'Ensure each project has a working live demo or public GitHub repository link.',
-        actionLabel: 'Review Project Bullets',
-        actionHref: '/bullet-rewriter?target=projects',
-        actionTab: 'rewriter'
+        actionLabel: 'Open Proof of Work Vault',
+        actionHref: '/proof-of-work',
+        actionTab: 'projects'
       });
     }
   } else {

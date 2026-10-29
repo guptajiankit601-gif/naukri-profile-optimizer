@@ -541,7 +541,7 @@ export const CompleteProfileAuditView: React.FC<CompleteProfileAuditViewProps> =
                                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                               }`}>
                                 {isResolved 
-                                  ? 'Resolved' 
+                                  ? 'Resolved by Candidate' 
                                   : finding.status === 'verified'
                                   ? 'Verified Evidence'
                                   : finding.status === 'not_found'
@@ -613,10 +613,12 @@ export const CompleteProfileAuditView: React.FC<CompleteProfileAuditViewProps> =
                             {/* Suggested improvement */}
                             <div className="p-3 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 space-y-1">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
-                                Suggested improvement:
+                                {isResolved ? 'Candidate Status:' : 'Suggested improvement:'}
                               </span>
                               <p className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                                {finding.suggestedImprovement}
+                                {isResolved
+                                  ? 'Marked as completed by candidate. Ensure this update is substantiated in your exported resume to satisfy recruiter screening checks.'
+                                  : finding.suggestedImprovement}
                               </p>
                             </div>
                           </div>
